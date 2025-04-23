@@ -2,8 +2,9 @@ package theBugApp.backend.config;
 
 
 
-import lombok.AllArgsConstructor;
+
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,28 +19,16 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import theBugApp.backend.service.CustomOAuth2UserService;
 import theBugApp.backend.service.UserDetailsServiceImpl;
 
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
+
 import java.util.List;
 
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.OctetSequenceKey;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.proc.SecurityContext;
 
 @Configuration
 @EnableWebSecurity
@@ -50,7 +39,8 @@ public class SecurityConfig {
 
 
     private String secretKey;
-
+    @Autowired
+    private CustomOAuth2UserService customOAuth2UserService;
     private final UserDetailsServiceImpl userDetailsService;
 
     public SecurityConfig(UserDetailsServiceImpl userDetailsService,
@@ -64,16 +54,46 @@ public class SecurityConfig {
         log.info("Configuring Security Filter Chain");
 
         return httpSecurity
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // ✅ Use session-based auth (important for OAuth2 success handler + @AuthenticationPrincipal)
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+
+                // 🔒 Disable CSRF for simplicity (in production, consider enabling it with proper config)
                 .csrf(csrf -> csrf.disable())
+
+                // 🌐 Enable CORS with default settings (customize as needed)
                 .cors(Customizer.withDefaults())
+
+                // 🔐 Authorization rules
                 .authorizeHttpRequests(ar -> ar
+                        // Public endpoints
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/password/forgot", "/password/reset").permitAll()
                         .requestMatchers("/register/users").permitAll()
+                        .requestMatchers("/").permitAll()
+                        .requestMatchers("/login/oauth2/code/google").permitAll()
+
+                        // Require authentication for all /api/** routes
+                        .requestMatchers("/api/**").authenticated()
+
+                        // Fallback: everything else requires authentication
                         .anyRequest().authenticated()
                 )
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+
+                // 🌐 OAuth2 login setup
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService)
+                        )
+                        .successHandler((request, response, authentication) -> {
+                            log.info("Authentication successful: {}", authentication.getName());
+                            response.sendRedirect("/api/login/oauth2/success");
+                        })
+                        .failureHandler((request, response, exception) -> {
+                            log.error("Authentication failed: {}", exception.getMessage());
+                            response.sendRedirect("/auth/failure");
+                        })
+                )
+
                 .build();
     }
 

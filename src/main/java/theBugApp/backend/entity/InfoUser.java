@@ -19,9 +19,15 @@ public class InfoUser {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String password;
 
     @OneToOne(mappedBy = "infoUser")
     private User user;
+
+    @Column(name = "oauth_provider")
+    private String provider; // "google", "local", etc.
+
+    @Column(name = "oauth_id")
+    private String providerId; // ID unique fourni par Google
 }
