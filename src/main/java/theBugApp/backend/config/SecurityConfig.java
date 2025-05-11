@@ -70,7 +70,8 @@ public class SecurityConfig {
                         .requestMatchers("/password/forgot", "/password/reset").permitAll()
                         .requestMatchers("/register/users").permitAll()
                         .requestMatchers("/").permitAll()
-                        .requestMatchers("/login/oauth2/code/google").permitAll()
+                        .requestMatchers("/login/oauth2/code/**").permitAll()
+
 
                         // Require authentication for all /api/** routes
                         .requestMatchers("/api/**").authenticated()
