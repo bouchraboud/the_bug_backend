@@ -3,10 +3,13 @@ package theBugApp.backend.entity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "info_user")
-@Data @NoArgsConstructor @AllArgsConstructor
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class InfoUser {
 
     @Id
@@ -23,11 +26,12 @@ public class InfoUser {
     private String password;
 
     @OneToOne(mappedBy = "infoUser")
+    @EqualsAndHashCode.Exclude  // <-- Exclure cette relation aussi
     private User user;
 
     @Column(name = "oauth_provider")
-    private String provider; // "google", "local", etc.
+    private String provider;
 
     @Column(name = "oauth_id")
-    private String providerId; // ID unique fourni par Google
+    private String providerId;
 }

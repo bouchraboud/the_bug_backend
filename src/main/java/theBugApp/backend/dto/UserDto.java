@@ -5,7 +5,7 @@ import theBugApp.backend.entity.InfoUser;
 @Data
 public class UserDto {
     private Long userId; // C’est ça que tu dois garder
-    private InfoUser infoUser;
+    private InfoUserDto infoUser;
     private Integer reputation;
     private String photoUrl;
     private boolean isConfirmed;

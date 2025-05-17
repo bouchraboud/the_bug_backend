@@ -2,6 +2,7 @@ package theBugApp.backend.entity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 
@@ -18,6 +19,7 @@ public class User {
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "app_user_id", referencedColumnName = "userId")
+    @EqualsAndHashCode.Exclude  // <-- Exclure cette relation
     private InfoUser infoUser;
 
     private String photoUrl;
