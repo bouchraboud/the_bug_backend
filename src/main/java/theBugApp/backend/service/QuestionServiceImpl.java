@@ -97,7 +97,8 @@ public class QuestionServiceImpl implements QuestionService {
                 question.getUser().getInfoUser().getUsername(),
                 question.getUser().getInfoUser().getEmail(),
                 0, // viewCount
-                0, // voteScore
+                0,// voteScore
+                question.getAnswers().size(),//answerCount
                 tagDTOs
         );
     }

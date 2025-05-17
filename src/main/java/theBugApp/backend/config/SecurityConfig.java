@@ -52,9 +52,33 @@ public class SecurityConfig {
         this.secretKey = secretKey;
     }
 
-
     @Bean
     @Order(1)
+    public SecurityFilterChain answersSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/answers/**")
+                .authorizeHttpRequests(auth -> auth
+                        // Secure POST endpoints (create answers)
+                        .requestMatchers(HttpMethod.POST, "/api/answers").authenticated()
+
+                        // Public GET endpoints (view answers)
+                        .requestMatchers(HttpMethod.GET, "/api/answers/question/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/answers/user/**").permitAll()
+
+                        // Secure all other endpoints
+                        .anyRequest().authenticated()
+                )
+                .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                );
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
     public SecurityFilterChain jwtSecurityFilterChain(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/api/questions")
@@ -73,7 +97,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Order(2)
+    @Order(3)
     public SecurityFilterChain publicSecurityFilterChain(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/api/tags/**")

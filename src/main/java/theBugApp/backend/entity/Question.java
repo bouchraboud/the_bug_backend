@@ -55,4 +55,8 @@ public class Question {
     public int hashCode() {
         return getClass().hashCode();
     }
+
+    // In Question.java
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Answer> answers = new HashSet<>();
 }

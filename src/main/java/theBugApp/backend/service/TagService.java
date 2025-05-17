@@ -111,6 +111,7 @@ public class TagService {
                 question.getUser().getInfoUser().getEmail(),
                 0, // viewCount
                 0, // voteScore
+                question.getAnswers().size(),
                 tagDTOs
         );
     }

@@ -14,5 +14,6 @@ public record QuestionResponseDTO(
         String authorEmail,
         int viewCount,
         int voteScore,
+        int answerCount,  // Add this field
         Set<SimpleTagDTO> tags// Plus tard: List<TagDTO> tags, List<AnswerDTO> answers, etc.
 ) {}

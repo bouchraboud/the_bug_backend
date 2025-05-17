@@ -36,4 +36,8 @@ public class User {
     // In User.java
     @OneToMany(mappedBy = "user")
     private Set<Question> questions = new HashSet<>();
+
+    // In User.java
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Answer> answers = new HashSet<>();
 }
