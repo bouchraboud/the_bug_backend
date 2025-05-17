@@ -65,8 +65,8 @@ public class QuestionServiceImpl implements QuestionService {
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
     }
-
-    private QuestionResponseDTO convertToResponseDTO(Question question) {
+    @Override
+    public QuestionResponseDTO convertToResponseDTO(Question question) {
         // Use a new, unconnected collection to avoid Hibernate proxies
         Set<SimpleTagDTO> tagDTOs = new HashSet<>();
 

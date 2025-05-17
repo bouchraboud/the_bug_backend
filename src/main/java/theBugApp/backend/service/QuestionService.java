@@ -9,4 +9,5 @@ public interface QuestionService {
     QuestionResponseDTO createQuestion(QuestionRequestDTO questionRequestDTO, String userEmail); // Ajout du paramètre userEmail
     QuestionResponseDTO getQuestionById(Long id);
     List<QuestionResponseDTO> getAllQuestions();
+    QuestionResponseDTO convertToResponseDTO(Question question);
 }

@@ -5,6 +5,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.util.HashSet;
+import java.util.Set;
+
 
 @Entity
 @Table(name = "users")
@@ -30,4 +33,7 @@ public class User {
     private Long version;
 
     private boolean isConfirmed;
+    // In User.java
+    @OneToMany(mappedBy = "user")
+    private Set<Question> questions = new HashSet<>();
 }

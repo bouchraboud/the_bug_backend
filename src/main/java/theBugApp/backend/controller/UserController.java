@@ -6,6 +6,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.web.bind.annotation.*;
+import theBugApp.backend.dto.QuestionResponseDTO;
 import theBugApp.backend.dto.UserDto;
 import theBugApp.backend.entity.User;
 import theBugApp.backend.entity.UserConfirmationToken;
@@ -17,6 +18,7 @@ import theBugApp.backend.service.UserService;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -151,6 +153,16 @@ public class UserController {
         return ResponseEntity.ok(Map.of("access-token", jwt));
     }
 
+
+    @GetMapping("/users/{id}/questions")
+    public ResponseEntity<?> getUserQuestions(@PathVariable Long id) {
+        try {
+            List<QuestionResponseDTO> questions = userService.getQuestionsByUserId(id);
+            return ResponseEntity.ok(questions);
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
 
 
 }

@@ -2,12 +2,14 @@ package theBugApp.backend.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import jakarta.transaction.Transactional;
+
 import lombok.AllArgsConstructor;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import theBugApp.backend.dto.QuestionResponseDTO;
 import theBugApp.backend.dto.UserDto;
 import theBugApp.backend.entity.InfoUser;
 import theBugApp.backend.entity.User;
@@ -16,14 +18,17 @@ import theBugApp.backend.exception.EmailNonValideException;
 import theBugApp.backend.exception.UserNotFoundException;
 import theBugApp.backend.exception.UsernameExistsException;
 import theBugApp.backend.mappers.UserMapper;
+import theBugApp.backend.repository.QuestionRepository;
 import theBugApp.backend.repository.UserConfirmationTokenRepo;
 import theBugApp.backend.repository.UserRepository;
 
 
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -38,6 +43,9 @@ public class UserServiceImpl implements UserService {
     private final JavaMailSender mailSender;
     private final PasswordEncoder passwordEncoder;
     private final UserConfirmationTokenRepo confirmationTokenRepo;
+    private final QuestionRepository questionRepository;
+    private final QuestionService questionService;
+
 
     @Override
     public UserDto saveUser(User user) throws EmailNonValideException, UsernameExistsException {
@@ -162,4 +170,19 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new UserNotFoundException("Utilisateur non trouvé pour cet email :: " + email));
         return userMapper.toUserDto(user);
     }
+
+    @Override
+    @Transactional(readOnly = true)  // This is the correct syntax
+    public List<QuestionResponseDTO> getQuestionsByUserId(Long userId) throws UserNotFoundException {
+        // First verify user exists
+        if (!userRepo.existsById(userId)) {
+            throw new UserNotFoundException("User not found with id: " + userId);
+        }
+
+        // Get questions and convert to DTOs
+        return questionRepository.findByUserId(userId).stream()
+                .map(questionService::convertToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
 }

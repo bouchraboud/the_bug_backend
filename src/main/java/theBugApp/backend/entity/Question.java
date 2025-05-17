@@ -16,7 +16,7 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = "tags") // Avoid circular references in toString
+@ToString(exclude = {"tags", "user"}) // Avoid circular references in toString
 public class Question {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
