@@ -5,8 +5,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
+import theBugApp.backend.dto.AnswerResponseDTO;
 import theBugApp.backend.dto.QuestionRequestDTO;
 import theBugApp.backend.dto.QuestionResponseDTO;
+import theBugApp.backend.service.AnswerService;
 import theBugApp.backend.service.QuestionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -20,6 +22,7 @@ import java.util.Map;
 public class QuestionController {
 
     private final QuestionService questionService;
+    private final AnswerService answerService;
 
     @PostMapping
     public ResponseEntity<QuestionResponseDTO> createQuestion(
@@ -55,6 +58,12 @@ public class QuestionController {
     public ResponseEntity<List<QuestionResponseDTO>> getAllQuestions() {
         List<QuestionResponseDTO> responses = questionService.getAllQuestions();
         return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/{questionId}/answers")
+    public ResponseEntity<List<AnswerResponseDTO>> getAnswersForQuestion(
+            @PathVariable Long questionId) {
+        return ResponseEntity.ok(answerService.getAnswersByQuestionId(questionId));
     }
 
     // Autres endpoints à ajouter selon les besoins...

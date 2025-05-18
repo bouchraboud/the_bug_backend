@@ -6,6 +6,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.web.bind.annotation.*;
+import theBugApp.backend.dto.AnswerResponseDTO;
 import theBugApp.backend.dto.QuestionResponseDTO;
 import theBugApp.backend.dto.UserDto;
 import theBugApp.backend.entity.User;
@@ -13,6 +14,7 @@ import theBugApp.backend.entity.UserConfirmationToken;
 import theBugApp.backend.exception.EmailNonValideException;
 import theBugApp.backend.exception.UserNotFoundException;
 import theBugApp.backend.exception.UsernameExistsException;
+import theBugApp.backend.service.AnswerService;
 import theBugApp.backend.service.UserService;
 
 import java.time.Instant;
@@ -34,12 +36,14 @@ import theBugApp.backend.repository.UserRepository;
 @RestController
 @AllArgsConstructor
 @CrossOrigin("*")
+@RequestMapping("/api") // <-- ADD THIS LINE
 public class UserController {
     private static final Logger logger = Logger.getLogger(UserController.class.getName());
     private final UserService userService;
     private final UserConfirmationTokenRepo confirmationTokenRepo;
     private final JwtEncoder jwtEncoder;
     private final UserRepository userRepository;
+    private final AnswerService answerService;
 
 
     @GetMapping("/users/{id}")
@@ -162,6 +166,11 @@ public class UserController {
         } catch (UserNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
+    }
+    @GetMapping("/users/{id}/answers")
+    public ResponseEntity<List<AnswerResponseDTO>> getAnswersByUser(
+            @PathVariable Long id) {
+        return ResponseEntity.ok(answerService.getAnswersByUserId(id));
     }
 
 

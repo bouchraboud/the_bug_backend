@@ -47,13 +47,4 @@ public class AnswerController {
         }
     }
 
-    @GetMapping("/question/{questionId}")
-    public ResponseEntity<List<AnswerResponseDTO>> getAnswersByQuestionId(@PathVariable Long questionId) {
-        return ResponseEntity.ok(answerService.getAnswersByQuestionId(questionId));
-    }
-
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<AnswerResponseDTO>> getAnswersByUserId(@PathVariable Long userId) {
-        return ResponseEntity.ok(answerService.getAnswersByUserId(userId));
-    }
 }
