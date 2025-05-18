@@ -108,6 +108,23 @@ public class SecurityConfig {
                 .oauth2ResourceServer(oauth2 -> oauth2.disable());
         return http.build();
     }
+    @Bean
+    @Order(1)
+    public SecurityFilterChain votesSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/votes/**")
+                .authorizeHttpRequests(auth -> auth
+                        // Tous les endpoints de vote nécessitent une authentification
+                        .anyRequest().authenticated()
+                )
+                .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                );
+        return http.build();
+    }
 
 
 

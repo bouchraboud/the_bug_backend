@@ -9,8 +9,10 @@ import theBugApp.backend.dto.SimpleTagDTO;
 import theBugApp.backend.entity.Question;
 import theBugApp.backend.entity.Tag;
 import theBugApp.backend.entity.User;
+import theBugApp.backend.entity.Vote;
 import theBugApp.backend.repository.QuestionRepository;
 import theBugApp.backend.repository.UserRepository;
+import theBugApp.backend.repository.VoteRepository;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -26,6 +28,8 @@ public class QuestionServiceImpl implements QuestionService {
     private final QuestionRepository questionRepository;
     private final UserRepository userRepository;
     private final TagService tagService;
+    private final VoteRepository voteRepository;
+
 
     @Override
     public QuestionResponseDTO createQuestion(QuestionRequestDTO request, String userEmail) {
@@ -67,6 +71,15 @@ public class QuestionServiceImpl implements QuestionService {
     }
     @Override
     public QuestionResponseDTO convertToResponseDTO(Question question) {
+        // Calculate vote score
+        int voteScore = 0;
+        List<Vote> votes = voteRepository.findByQuestion(question);
+        if (votes != null) {
+            voteScore = votes.stream()
+                    .mapToInt(v -> v.getVoteType() == Vote.VoteType.UPVOTE ? 1 : -1)
+                    .sum();
+        }
+
         // Use a new, unconnected collection to avoid Hibernate proxies
         Set<SimpleTagDTO> tagDTOs = new HashSet<>();
 
@@ -97,8 +110,8 @@ public class QuestionServiceImpl implements QuestionService {
                 question.getUser().getInfoUser().getUsername(),
                 question.getUser().getInfoUser().getEmail(),
                 0, // viewCount
-                0,// voteScore
-                question.getAnswers().size(),//answerCount
+                voteScore, // Now includes actual vote score
+                question.getAnswers().size(),
                 tagDTOs
         );
     }
