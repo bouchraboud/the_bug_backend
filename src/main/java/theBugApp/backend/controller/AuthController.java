@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -49,23 +50,30 @@ public class AuthController {
         logger.info("Login attempt for user: " + email);
 
         try {
-            // Vérifiez si l'utilisateur existe avant d'essayer de l'authentifier
+            // First check if user exists
             User user = userRepository.findByInfoUser_Email(email)
                     .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
 
-            // Authentifiez l'utilisateur
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(email, password));
+            // Then check if email is confirmed
+            if (!user.isConfirmed()) {
+                logger.warning("Email not confirmed for user: " + email);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "Email is not confirmed. Please verify your email."));
+            }
 
-            // Obtenez l'heure actuelle
+            // Now authenticate the user
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, password)
+            );
+
+            // (JWT token creation code here, same as before)
+
             Instant instant = Instant.now();
 
-            // Obtenez les rôles (scope) de l'utilisateur
             String scope = authentication.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.joining(" "));
 
-            // Créez les revendications pour le jeton JWT
             Map<String, Object> claims = new HashMap<>();
             claims.put("username", user.getInfoUser().getUsername());
             claims.put("email", email);
@@ -77,7 +85,6 @@ public class AuthController {
                 claims.put("photoUrl", user.getPhotoUrl());
             }
 
-            // Construisez le jeton JWT
             JwtClaimsSet jwtClaimsSet = JwtClaimsSet.builder()
                     .issuer("theBugApp")
                     .issuedAt(instant)
@@ -86,17 +93,19 @@ public class AuthController {
                     .claim("claims", claims)
                     .build();
 
-            // Encodez le jeton JWT
             JwtEncoderParameters jwtEncoderParameters = JwtEncoderParameters.from(
                     JwsHeader.with(MacAlgorithm.HS512).build(),
                     jwtClaimsSet
             );
 
-            // Retournez le jeton en réponse
             String jwt = jwtEncoder.encode(jwtEncoderParameters).getTokenValue();
             logger.info("Successfully generated JWT token for user: " + email);
             return ResponseEntity.ok(Map.of("access-token", jwt));
 
+        } catch (DisabledException ex) {
+            logger.warning("User account is disabled: " + email);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Account is disabled. Please confirm your email to activate your account."));
         } catch (UserNotFoundException ex) {
             logger.warning("User not found: " + ex.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -112,7 +121,6 @@ public class AuthController {
                     .body(Map.of("error", "Authentication failed due to an unexpected error"));
         }
     }
-
 
 
     @GetMapping("/verify/{token}")
