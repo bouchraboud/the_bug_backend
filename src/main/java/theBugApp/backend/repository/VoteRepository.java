@@ -1,6 +1,8 @@
 package theBugApp.backend.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import theBugApp.backend.entity.Vote;
 import theBugApp.backend.entity.User;
 import theBugApp.backend.entity.Question;
@@ -16,4 +18,6 @@ public interface VoteRepository extends JpaRepository<Vote, Long> {
     boolean existsByUserAndAnswer(User user, Answer answer);
     // Add this new method
     List<Vote> findByQuestion(Question question);
+    List<Vote> findByAnswer(Answer answer);
+
 }

@@ -8,11 +8,13 @@ import theBugApp.backend.dto.AnswerResponseDTO;
 import theBugApp.backend.entity.Answer;
 import theBugApp.backend.entity.Question;
 import theBugApp.backend.entity.User;
+import theBugApp.backend.entity.Vote;
 import theBugApp.backend.exception.QuestionNotFoundException;
 import theBugApp.backend.exception.UserNotFoundException;
 import theBugApp.backend.repository.AnswerRepository;
 import theBugApp.backend.repository.QuestionRepository;
 import theBugApp.backend.repository.UserRepository;
+import theBugApp.backend.repository.VoteRepository;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,6 +26,7 @@ public class AnswerServiceImpl implements AnswerService {
     private final AnswerRepository answerRepository;
     private final UserRepository userRepository;
     private final QuestionRepository questionRepository;
+    private final VoteRepository voteRepository;
 
     @Override
     @Transactional
@@ -70,15 +73,23 @@ public class AnswerServiceImpl implements AnswerService {
     }
 
     private AnswerResponseDTO convertToDTO(Answer answer) {
+        List<Vote> votes = voteRepository.findByAnswer(answer);
+        int voteScore = (votes != null)
+                ? votes.stream()
+                .mapToInt(v -> v.getVoteType() == Vote.VoteType.UPVOTE ? 1 : -1)
+                .sum()
+                : 0;
+
         return new AnswerResponseDTO(
                 answer.getId(),
                 answer.getContent(),
                 answer.getCreatedAt(),
                 answer.getUpdatedAt(),
-                answer.getVoteScore(),
+                voteScore,
                 answer.getUser().getInfoUser().getUsername(),
                 answer.getUser().getInfoUser().getEmail(),
                 answer.getQuestion().getId()
         );
     }
+
 }
