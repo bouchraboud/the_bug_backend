@@ -2,6 +2,7 @@ package theBugApp.backend.controller;
 
 import lombok.AllArgsConstructor;
 import org.apache.coyote.BadRequestException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -41,30 +42,30 @@ public class AuthController {
     private final JwtEncoder jwtEncoder;
 
     @PostMapping("/login/user")
-    public Map<String, String> login(@RequestBody AuthRequest request) throws BadRequestException, UserNotFoundException {
+    public ResponseEntity<Map<String, String>> login(@RequestBody AuthRequest request) {
         String email = request.getEmail();
         String password = request.getPassword();
 
         logger.info("Login attempt for user: " + email);
 
         try {
-            // Authenticate the user
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(email, password));
-
-            // Get the current time
-            Instant instant = Instant.now();
-
-            // Retrieve the user from the repository
+            // Vérifiez si l'utilisateur existe avant d'essayer de l'authentifier
             User user = userRepository.findByInfoUser_Email(email)
                     .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
 
-            // Get the roles (scope) of the user
+            // Authentifiez l'utilisateur
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, password));
+
+            // Obtenez l'heure actuelle
+            Instant instant = Instant.now();
+
+            // Obtenez les rôles (scope) de l'utilisateur
             String scope = authentication.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.joining(" "));
 
-            // Create claims for the JWT token
+            // Créez les revendications pour le jeton JWT
             Map<String, Object> claims = new HashMap<>();
             claims.put("username", user.getInfoUser().getUsername());
             claims.put("email", email);
@@ -76,7 +77,7 @@ public class AuthController {
                 claims.put("photoUrl", user.getPhotoUrl());
             }
 
-            // Build the JWT token
+            // Construisez le jeton JWT
             JwtClaimsSet jwtClaimsSet = JwtClaimsSet.builder()
                     .issuer("theBugApp")
                     .issuedAt(instant)
@@ -85,27 +86,30 @@ public class AuthController {
                     .claim("claims", claims)
                     .build();
 
-            // Encode the JWT token
+            // Encodez le jeton JWT
             JwtEncoderParameters jwtEncoderParameters = JwtEncoderParameters.from(
                     JwsHeader.with(MacAlgorithm.HS512).build(),
                     jwtClaimsSet
             );
 
-            // Return the token as a response
+            // Retournez le jeton en réponse
             String jwt = jwtEncoder.encode(jwtEncoderParameters).getTokenValue();
             logger.info("Successfully generated JWT token for user: " + email);
-            return Map.of("access-token", jwt);
+            return ResponseEntity.ok(Map.of("access-token", jwt));
 
-        } catch (BadCredentialsException ex) {
-            logger.severe("Invalid credentials for user: " + email);
-            throw new BadRequestException("Invalid email or password");
         } catch (UserNotFoundException ex) {
-            logger.severe("User not found: " + ex.getMessage());
-            throw ex;
+            logger.warning("User not found: " + ex.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", ex.getMessage()));
+        } catch (BadCredentialsException ex) {
+            logger.warning("Invalid credentials for user: " + email);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Invalid email or password"));
         } catch (Exception ex) {
             logger.severe("Authentication failed for user: " + email + " - " + ex.getMessage());
             ex.printStackTrace();
-            throw new RuntimeException("Authentication failed", ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Authentication failed due to an unexpected error"));
         }
     }
 
