@@ -133,6 +133,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
                         // Public endpoints - no authentication required
+                        .requestMatchers(HttpMethod.PUT, "/api/users").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*/is-following/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*/followers").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*/following").permitAll()

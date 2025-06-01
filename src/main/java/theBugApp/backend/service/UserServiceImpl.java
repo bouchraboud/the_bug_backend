@@ -21,6 +21,7 @@ import theBugApp.backend.mappers.UserMapper;
 import theBugApp.backend.repository.QuestionRepository;
 import theBugApp.backend.repository.UserConfirmationTokenRepo;
 import theBugApp.backend.repository.UserRepository;
+import theBugApp.backend.dto.UpdateUserDto;
 
 
 import java.util.Date;
@@ -184,7 +185,37 @@ public class UserServiceImpl implements UserService {
                 .map(questionService::convertToResponseDTO)
                 .collect(Collectors.toList());
     }
+    @Override
+    public UserDto updateUser(Long userId, UpdateUserDto dto) {
+        // Validation
+        if (dto == null || !dto.hasUpdates()) {
+            throw new IllegalArgumentException("Aucune mise à jour fournie");
+        }
 
+        // Récupérer l'utilisateur
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé avec l'ID: " + userId));
 
+        // Mise à jour basée sur les champs marqués pour la mise à jour
+        if (dto.shouldUpdate("photoUrl")) {
+            user.setPhotoUrl(dto.getPhotoUrl()); // Peut être null pour "vider" le champ
+        }
+
+        if (dto.shouldUpdate("reputation")) {
+            user.setReputation(dto.getReputation() != null ? dto.getReputation() : 0);
+        }
+
+        if (dto.shouldUpdate("isConfirmed")) {
+            user.setConfirmed(dto.getIsConfirmed() != null ? dto.getIsConfirmed() : false);
+        }
+
+        if (dto.shouldUpdate("country")) {
+            user.setCountry(dto.getCountry()); // Peut être null pour "supprimer" le pays
+        }
+
+        // Sauvegarder et retourner
+        User savedUser = userRepo.save(user);
+        return userMapper.toUserDto(savedUser);
+    }
 
 }

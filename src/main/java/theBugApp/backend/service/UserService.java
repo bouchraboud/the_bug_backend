@@ -2,6 +2,7 @@ package theBugApp.backend.service;
 
 
 import theBugApp.backend.dto.QuestionResponseDTO;
+import theBugApp.backend.dto.UpdateUserDto;
 import theBugApp.backend.dto.UserDto;
 import theBugApp.backend.entity.User;
 import theBugApp.backend.exception.EmailNonValideException;
@@ -18,4 +19,6 @@ public interface UserService {
     UserDto getUserById(Long id) throws UserNotFoundException;
     UserDto getUserByEmail(String email) throws UserNotFoundException;
     List<QuestionResponseDTO> getQuestionsByUserId(Long userId) throws UserNotFoundException;
+
+    UserDto updateUser(Long userId, UpdateUserDto dto);
 }

@@ -6,9 +6,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.*;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
 import theBugApp.backend.dto.AnswerResponseDTO;
 import theBugApp.backend.dto.QuestionResponseDTO;
+import theBugApp.backend.dto.UpdateUserDto;
 import theBugApp.backend.dto.UserDto;
 import theBugApp.backend.entity.User;
 import theBugApp.backend.entity.UserConfirmationToken;
@@ -263,6 +265,31 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
+    @PutMapping("/users")
+    public ResponseEntity<?> updateUser(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestBody UpdateUserDto updateUserDto) {
+
+        try {
+            Map<String, Object> claims = jwt.getClaim("claims");
+            Long userId = ((Number) claims.get("userId")).longValue();
+            UserDto updatedUser = userService.updateUser(userId, updateUserDto);
+            return ResponseEntity.ok(updatedUser);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "VALIDATION_ERROR", "message", e.getMessage()));
+
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("non trouvé")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "USER_NOT_FOUND", "message", e.getMessage()));
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "INTERNAL_ERROR", "message", "Erreur interne du serveur"));
+        }
+    }
+
 
 
 }
