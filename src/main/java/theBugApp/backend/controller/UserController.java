@@ -4,7 +4,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.*;
 import org.springframework.web.bind.annotation.*;
 import theBugApp.backend.dto.AnswerResponseDTO;
 import theBugApp.backend.dto.QuestionResponseDTO;
@@ -15,6 +16,7 @@ import theBugApp.backend.exception.EmailNonValideException;
 import theBugApp.backend.exception.UserNotFoundException;
 import theBugApp.backend.exception.UsernameExistsException;
 import theBugApp.backend.service.AnswerService;
+import theBugApp.backend.service.FollowService;
 import theBugApp.backend.service.UserService;
 
 import java.time.Instant;
@@ -25,9 +27,6 @@ import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
-import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import theBugApp.backend.repository.UserConfirmationTokenRepo;
 import theBugApp.backend.repository.UserRepository;
@@ -44,6 +43,8 @@ public class UserController {
     private final JwtEncoder jwtEncoder;
     private final UserRepository userRepository;
     private final AnswerService answerService;
+    private final FollowService followService; // Nouveau service
+
 
 
     @GetMapping("/users/{id}")
@@ -108,19 +109,15 @@ public class UserController {
     @PostMapping("/exchange-token")
     public ResponseEntity<?> exchangeToken(@RequestBody Map<String, String> body) {
         String token = body.get("token");
-
         if (token == null || token.isBlank()) {
             return ResponseEntity.badRequest().body("Token manquant");
         }
-
         UserConfirmationToken confirmationToken = confirmationTokenRepo.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Token invalide"));
-
         User user = confirmationToken.getUser();
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Utilisateur introuvable");
         }
-
         // Génération du JWT
         Instant now = Instant.now();
         String email = user.getInfoUser().getEmail();
@@ -171,6 +168,100 @@ public class UserController {
     public ResponseEntity<List<AnswerResponseDTO>> getAnswersByUser(
             @PathVariable Long id) {
         return ResponseEntity.ok(answerService.getAnswersByUserId(id));
+    }
+    @PostMapping("/users/follow/{followingId}")
+    public ResponseEntity<?> followUser(@PathVariable Long followingId, @AuthenticationPrincipal Jwt jwt) {
+        try {
+            Map<String, Object> claims = jwt.getClaim("claims");
+            Long followerId = ((Number) claims.get("userId")).longValue();
+            boolean success = followService.followUser(followerId, followingId);
+            if (success) {
+                return ResponseEntity.ok(Map.of("message", "User followed successfully"));
+            } else {
+                return ResponseEntity.badRequest().body("Already following this user");
+            }
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/users/unfollow/{followingId}")
+    public ResponseEntity<?> unfollowUser(@PathVariable Long followingId, @AuthenticationPrincipal Jwt jwt) {
+        try {
+            Map<String, Object> claims = jwt.getClaim("claims");
+            Long followerId = ((Number) claims.get("userId")).longValue();
+            boolean success = followService.unfollowUser(followerId, followingId);
+
+            if (success) {
+                return ResponseEntity.ok(Map.of("message", "User unfollowed successfully")); // Fixed
+            } else {
+                return ResponseEntity.badRequest().body("Not following this user"); // Fixed
+            }
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error: " + e.getMessage());
+        }
+    }
+
+    // Vérifier si un utilisateur en suit un autre
+    @GetMapping("/users/{followerId}/is-following/{followingId}")
+    public ResponseEntity<?> isFollowing(@PathVariable Long followerId, @PathVariable Long followingId) {
+        try {
+            boolean isFollowing = followService.isFollowing(followerId, followingId);
+            return ResponseEntity.ok(Map.of("isFollowing", isFollowing));
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+    // Obtenir les followers d'un utilisateur
+    @GetMapping("/users/{id}/followers")
+    public ResponseEntity<?> getFollowers(@PathVariable Long id) {
+        try {
+            List<UserDto> followers = followService.getFollowers(id);
+            return ResponseEntity.ok(followers);
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+    // Obtenir les utilisateurs qu'un utilisateur suit
+    @GetMapping("/users/{id}/following")
+    public ResponseEntity<?> getFollowing(@PathVariable Long id) {
+        try {
+            List<UserDto> following = followService.getFollowing(id);
+            return ResponseEntity.ok(following);
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+    // Obtenir les statistiques de suivi
+    @GetMapping("/users/{id}/follow-stats")
+    public ResponseEntity<?> getFollowStats(@PathVariable Long id) {
+        try {
+            long followersCount = followService.getFollowersCount(id);
+            long followingCount = followService.getFollowingCount(id);
+
+            Map<String, Object> stats = new HashMap<>();
+            stats.put("followersCount", followersCount);
+            stats.put("followingCount", followingCount);
+
+            return ResponseEntity.ok(stats);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 
 

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import theBugApp.backend.enums.Country;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -32,6 +33,7 @@ public class User {
     @Version
     private Long version;
 
+
     private boolean isConfirmed;
     // In User.java
     @OneToMany(mappedBy = "user")
@@ -40,4 +42,18 @@ public class User {
     // In User.java
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Answer> answers = new HashSet<>();
+
+    // Relations pour les followers/following
+    @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
+    @EqualsAndHashCode.Exclude
+    private Set<Follow> following = new HashSet<>();
+
+    @OneToMany(mappedBy = "following", cascade = CascadeType.ALL, orphanRemoval = true)
+    @EqualsAndHashCode.Exclude
+    private Set<Follow> followers = new HashSet<>();
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "country", nullable = true)
+    private Country country;
+
 }

@@ -43,7 +43,7 @@ public class SecurityConfig {
 
     private String secretKey;
     @Autowired
-    private CustomOAuth2UserService customOAuth2UserService;
+
     private final UserDetailsServiceImpl userDetailsService;
 
     public SecurityConfig(UserDetailsServiceImpl userDetailsService,
@@ -109,12 +109,42 @@ public class SecurityConfig {
         return http.build();
     }
     @Bean
-    @Order(1)
+    @Order(4)
     public SecurityFilterChain votesSecurityFilterChain(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/api/votes/**")
                 .authorizeHttpRequests(auth -> auth
                         // Tous les endpoints de vote nécessitent une authentification
+                        .anyRequest().authenticated()
+                )
+                .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                );
+        return http.build();
+    }
+    @Bean
+    @Order(5) // Ou un ordre approprié
+    public SecurityFilterChain usersSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("api/users/**")
+                .authorizeHttpRequests(auth -> auth
+
+                        // Public endpoints - no authentication required
+                        .requestMatchers(HttpMethod.GET, "/api/users/*/is-following/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/*/followers").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/*/following").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/*/follow-stats").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/public/**").permitAll()
+                        // Endpoints qui nécessitent une authentification
+                        .requestMatchers(HttpMethod.POST, "api/users/follow/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "api/users/unfollow/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "api/users/profile/**").authenticated()
+
+
+                        // Par défaut, tout nécessite une authentification
                         .anyRequest().authenticated()
                 )
                 .csrf(csrf -> csrf.disable())
