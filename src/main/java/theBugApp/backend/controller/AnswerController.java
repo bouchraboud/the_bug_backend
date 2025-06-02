@@ -7,7 +7,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
         import theBugApp.backend.dto.AnswerRequestDTO;
 import theBugApp.backend.dto.AnswerResponseDTO;
+import theBugApp.backend.exception.AnswerNotFoundException;
 import theBugApp.backend.exception.QuestionNotFoundException;
+import theBugApp.backend.exception.UnauthorizedActionException;
 import theBugApp.backend.exception.UserNotFoundException;
 import theBugApp.backend.service.AnswerService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -46,5 +48,45 @@ public class AnswerController {
                     .body("User with email " + email + " does not exist");
         }
     }
+
+    @PostMapping("/{id}/accept")
+    public ResponseEntity<?> acceptAnswer(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        Map<String, Object> claims = jwt.getClaim("claims");
+        String email = (String) claims.get("email");
+
+        try {
+            AnswerResponseDTO response = answerService.acceptAnswer(id, email);
+            return ResponseEntity.ok(response);
+        } catch (AnswerNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Answer with ID " + id + " does not exist");
+        } catch (UnauthorizedActionException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("You are not authorized to accept this answer");
+        }
+    }
+    @PostMapping("/{id}/disaccept")
+    public ResponseEntity<?> disacceptAnswer(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        Map<String, Object> claims = jwt.getClaim("claims");
+        String email = (String) claims.get("email");
+
+        try {
+            AnswerResponseDTO response = answerService.disacceptAnswer(id, email);
+            return ResponseEntity.ok(response);
+        } catch (AnswerNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Answer with ID " + id + " does not exist");
+        } catch (UnauthorizedActionException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("You are not authorized to disaccept this answer");
+        }
+    }
+
 
 }

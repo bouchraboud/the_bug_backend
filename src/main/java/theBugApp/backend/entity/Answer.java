@@ -36,6 +36,9 @@ public class Answer {
     @JoinColumn(name = "question_id")
     private Question question;
 
+    @Column(nullable = true)
+    private boolean isAccepted = false;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

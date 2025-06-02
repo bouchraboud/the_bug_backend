@@ -60,7 +60,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Secure POST endpoints (create answers)
                         .requestMatchers(HttpMethod.POST, "/api/answers").authenticated()
-
+                        .requestMatchers(HttpMethod.POST, "/api/answers/*/accept").authenticated()
                         // Public GET endpoints (view answers)
                         .requestMatchers(HttpMethod.GET, "/api/answers/question/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/answers/user/**").permitAll()
@@ -156,6 +156,30 @@ public class SecurityConfig {
                 );
         return http.build();
     }
+    @Bean
+    @Order(6)
+    public SecurityFilterChain commentsSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/comments/**")
+                .authorizeHttpRequests(auth -> auth
+                        // POST requests require authentication (to add comments)
+                        .requestMatchers(HttpMethod.POST, "/api/comments/**").authenticated()
+
+                        // GET requests to fetch comments are public
+                        .requestMatchers(HttpMethod.GET, "/api/comments/**").permitAll()
+
+                        // Any other request under /api/comments requires authentication by default
+                        .anyRequest().authenticated()
+                )
+                .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                );
+        return http.build();
+    }
+
 
 
 

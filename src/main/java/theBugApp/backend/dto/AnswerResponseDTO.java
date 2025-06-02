@@ -7,6 +7,7 @@ public record AnswerResponseDTO(
         String content,
         Date createdAt,
         Date updatedAt,
+        boolean isAccepted,
         int voteScore,
         String authorUsername,
         String authorEmail,

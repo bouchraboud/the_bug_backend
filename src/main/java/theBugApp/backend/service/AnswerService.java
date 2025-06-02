@@ -9,4 +9,8 @@ public interface AnswerService {
     AnswerResponseDTO createAnswer(AnswerRequestDTO answerRequest, String userEmail);
     List<AnswerResponseDTO> getAnswersByQuestionId(Long questionId);
     List<AnswerResponseDTO> getAnswersByUserId(Long userId);
+
+    AnswerResponseDTO acceptAnswer(Long answerId, String userEmail);
+
+    AnswerResponseDTO disacceptAnswer(Long answerId, String userEmail);
 }

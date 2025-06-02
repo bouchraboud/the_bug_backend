@@ -9,7 +9,9 @@ import theBugApp.backend.entity.Answer;
 import theBugApp.backend.entity.Question;
 import theBugApp.backend.entity.User;
 import theBugApp.backend.entity.Vote;
+import theBugApp.backend.exception.AnswerNotFoundException;
 import theBugApp.backend.exception.QuestionNotFoundException;
+import theBugApp.backend.exception.UnauthorizedActionException;
 import theBugApp.backend.exception.UserNotFoundException;
 import theBugApp.backend.repository.AnswerRepository;
 import theBugApp.backend.repository.QuestionRepository;
@@ -85,11 +87,55 @@ public class AnswerServiceImpl implements AnswerService {
                 answer.getContent(),
                 answer.getCreatedAt(),
                 answer.getUpdatedAt(),
+                answer.isAccepted(),
                 voteScore,
                 answer.getUser().getInfoUser().getUsername(),
                 answer.getUser().getInfoUser().getEmail(),
                 answer.getQuestion().getId()
         );
     }
+
+    @Override
+    public AnswerResponseDTO acceptAnswer(Long answerId, String userEmail) {
+        Answer answer = answerRepository.findById(answerId)
+                .orElseThrow(() -> new AnswerNotFoundException(answerId));
+
+        Question question = answer.getQuestion();
+        User questionOwner = question.getUser();
+
+        if (!questionOwner.getInfoUser().getEmail().equals(userEmail)) {
+            throw new UnauthorizedActionException("Only the question owner can accept an answer");
+        }
+
+        answer.setAccepted(true);
+        Answer updatedAnswer = answerRepository.save(answer);
+
+        return convertToDTO(updatedAnswer);
+    }
+
+    @Override
+    public AnswerResponseDTO disacceptAnswer(Long answerId, String userEmail) {
+        // Retrieve the answer
+        Answer answer = answerRepository.findById(answerId)
+                .orElseThrow(() -> new AnswerNotFoundException(answerId));
+
+        // Retrieve the question associated with the answer
+        Question question = answer.getQuestion();
+        User questionOwner = question.getUser();
+
+        // Check if the user is the question owner
+        if (!questionOwner.getInfoUser().getEmail().equals(userEmail)) {
+            throw new UnauthorizedActionException("Only the question owner can disaccept an answer");
+        }
+
+        // Set 'isAccepted' to false
+        answer.setAccepted(false);
+        Answer updatedAnswer = answerRepository.save(answer);
+
+        // Convert the updated answer to a DTO
+        return convertToDTO(updatedAnswer);
+    }
+
+
 
 }
