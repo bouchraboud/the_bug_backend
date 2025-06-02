@@ -212,6 +212,17 @@ public class UserServiceImpl implements UserService {
         if (dto.shouldUpdate("country")) {
             user.setCountry(dto.getCountry()); // Peut être null pour "supprimer" le pays
         }
+        if (dto.shouldUpdate("about")) {
+            user.setAbout(dto.getAbout()); // ✅ FIXED - now correctly sets about
+        }
+
+        if (dto.shouldUpdate("githubLink")) {
+            user.setGithubLink(dto.getGithubLink()); // ✅ FIXED - now correctly sets githubLink
+        }
+
+        if (dto.shouldUpdate("portfolioLink")) {
+            user.setPortfolioLink(dto.getPortfolioLink()); // ✅ FIXED - now correctly sets portfolioLink
+        }
 
         // Sauvegarder et retourner
         User savedUser = userRepo.save(user);

@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import theBugApp.backend.enums.Country;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -55,5 +56,16 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "country", nullable = true)
     private Country country;
+
+    @Column(name = "github_link")
+    private String githubLink;
+
+    @Column(name = "portfolio_link")
+    private String portfolioLink;
+    @Column(name = "created_date",  updatable = false)
+    private LocalDateTime createdDate;
+    @Column(name = "about", columnDefinition = "TEXT")
+    private String about;
+
 
 }

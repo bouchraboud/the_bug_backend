@@ -1,5 +1,6 @@
 package theBugApp.backend.service;
 
+import org.springframework.transaction.annotation.Transactional;
 import theBugApp.backend.dto.QuestionRequestDTO;
 import theBugApp.backend.dto.QuestionResponseDTO;
 import theBugApp.backend.entity.Question;
@@ -10,4 +11,7 @@ public interface QuestionService {
     QuestionResponseDTO getQuestionById(Long id);
     List<QuestionResponseDTO> getAllQuestions();
     QuestionResponseDTO convertToResponseDTO(Question question);
+
+    @Transactional(readOnly = true)
+    List<QuestionResponseDTO> searchQuestions(String query, String tag, int page, int size);
 }

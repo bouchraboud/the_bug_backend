@@ -5,14 +5,20 @@ import theBugApp.backend.dto.InfoUserDto;
 import theBugApp.backend.dto.UserDto;
 import theBugApp.backend.entity.User;
 import theBugApp.backend.repository.FollowRepository;
+import theBugApp.backend.repository.QuestionRepository;
+import theBugApp.backend.repository.VoteRepository;
 
 @Component
 public class UserMapper {
 
     private final FollowRepository followRepository;
+    private final QuestionRepository questionRepository;
+    private final VoteRepository voteRepository;
 
-    public UserMapper(FollowRepository followRepository) {
+    public UserMapper(FollowRepository followRepository,QuestionRepository questionRepository, VoteRepository voteRepository) {
         this.followRepository = followRepository;
+        this.questionRepository=questionRepository;
+        this.voteRepository=voteRepository;
     }
 
     public UserDto toUserDto(User user) {
@@ -27,7 +33,14 @@ public class UserMapper {
         // Calculer les counts
         dto.setFollowersCount((int) followRepository.countFollowersByUserId(user.getUserId()));
         dto.setFollowingCount((int) followRepository.countFollowingByUserId(user.getUserId()));
+        dto.setQuestionCount((int) questionRepository.countByUserId(user.getUserId()));
+        dto.setVoteCount((int) voteRepository.countByUserId(user.getUserId()));
 
+        // Mapper les nouveaux champs
+        dto.setCreatedDate(user.getCreatedDate());
+        dto.setGithubLink(user.getGithubLink());
+        dto.setPortfolioLink(user.getPortfolioLink());
+        dto.setAbout(user.getAbout());
 
         InfoUserDto infoDto = new InfoUserDto();
         infoDto.setUserId(user.getInfoUser().getUserId());

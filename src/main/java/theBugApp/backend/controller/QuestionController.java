@@ -68,5 +68,15 @@ public class QuestionController {
 
     // Autres endpoints à ajouter selon les besoins...
 
+    @GetMapping("/search")
+    public ResponseEntity<List<QuestionResponseDTO>> searchQuestions(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String tag,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        List<QuestionResponseDTO> responses = questionService.searchQuestions(query, tag, page, size);
+        return ResponseEntity.ok(responses);
+    }
 
 }

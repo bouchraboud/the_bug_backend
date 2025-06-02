@@ -11,7 +11,10 @@ public class UpdateUserDto {
     private Integer reputation;
     private Boolean isConfirmed;
     private Country country;
-
+    // Nouveaux champs
+    private String githubLink;
+    private String portfolioLink;
+    private String about;
     // Champs pour indiquer explicitement quels attributs doivent être mis à jour
     private Set<String> fieldsToUpdate = new HashSet<>();
 
@@ -35,6 +38,20 @@ public class UpdateUserDto {
         this.country = country;
         this.fieldsToUpdate.add("country");
     }
+    public void setGithubLink(String githubLink) {
+        this.githubLink = githubLink;
+        this.fieldsToUpdate.add("githubLink");
+    }
+
+    public void setPortfolioLink(String portfolioLink) {
+        this.portfolioLink = portfolioLink;
+        this.fieldsToUpdate.add("portfolioLink");
+    }
+
+    public void setAbout(String about) {
+        this.about = about;
+        this.fieldsToUpdate.add("about");
+    }
 
     // Méthodes pour forcer la mise à jour d'un champ même s'il est null
     public void forceUpdatePhotoUrl(String photoUrl) {
@@ -46,6 +63,21 @@ public class UpdateUserDto {
         this.country = country;
         this.fieldsToUpdate.add("country");
     }
+    public void forceUpdateGithubLink(String githubLink) {
+        this.githubLink = githubLink;
+        this.fieldsToUpdate.add("githubLink");
+    }
+
+    public void forceUpdatePortfolioLink(String portfolioLink) {
+        this.portfolioLink = portfolioLink;
+        this.fieldsToUpdate.add("portfolioLink");
+    }
+
+    public void forceUpdateAbout(String about) {
+        this.about = about;
+        this.fieldsToUpdate.add("about");
+    }
+
 
     // Vérifier si un champ doit être mis à jour
     public boolean shouldUpdate(String fieldName) {

@@ -1,6 +1,11 @@
 package theBugApp.backend.service;
 
 import lombok.RequiredArgsConstructor;
+
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import theBugApp.backend.dto.QuestionResponseDTO;
@@ -115,4 +120,27 @@ public class QuestionServiceImpl implements QuestionService {
                 tagDTOs
         );
     }
+    @Transactional(readOnly = true)
+    @Override
+    public List<QuestionResponseDTO> searchQuestions(String query, String tag, int page, int size) {
+        List<Question> questions;
+
+        // Apply filters for query and/or tag with pagination
+        if (query != null && tag != null) {
+            questions = questionRepository.searchByTitleOrContentAndTag(query, tag, PageRequest.of(page, size));
+        } else if (query != null) {
+            questions = questionRepository.searchQuestionsByTitleOrContent(query, PageRequest.of(page, size));
+        } else if (tag != null) {
+            questions = questionRepository.findByTags_Name(tag, PageRequest.of(page, size));
+        } else {
+            questions = Collections.emptyList();
+        }
+
+        // Convert to DTOs
+        return questions.stream()
+                .map(this::convertToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+
 }
