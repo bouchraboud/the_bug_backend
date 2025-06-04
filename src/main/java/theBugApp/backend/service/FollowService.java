@@ -4,12 +4,10 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import theBugApp.backend.dto.UserDto;
-import theBugApp.backend.entity.Follow;
-import theBugApp.backend.entity.User;
-import theBugApp.backend.exception.UserNotFoundException;
+import theBugApp.backend.entity.*;
+import theBugApp.backend.exception.*;
 import theBugApp.backend.mappers.UserMapper;
-import theBugApp.backend.repository.FollowRepository;
-import theBugApp.backend.repository.UserRepository;
+import theBugApp.backend.repository.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,6 +20,13 @@ public class FollowService {
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+
+    private final TagRepository tagRepository;
+    private final FollowTagRepository followTagRepository;
+    private final QuestionRepository questionRepository;
+    private final FollowQuestionRepository followQuestionRepository;
+    private final AnswerRepository answerRepository;
+    private final FollowAnswerRepository followAnswerRepository;
 
     // Suivre un utilisateur
     public boolean followUser(Long followerId, Long followingId) throws UserNotFoundException {
@@ -107,4 +112,87 @@ public class FollowService {
     public long getFollowingCount(Long userId) {
         return followRepository.countFollowingByUserId(userId);
     }
+
+    public void followTag(Long tagId, String userEmail) {
+        User user = userRepository.findByInfoUser_Email(userEmail)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        Tag tag = tagRepository.findById(tagId)
+                .orElseThrow(() -> new TagNotFoundException("Tag not found"));
+
+        FollowTag followTag = new FollowTag();
+        followTag.setUser(user);
+        followTag.setTag(tag);
+
+        followTagRepository.save(followTag);
+    }
+
+    public void followQuestion(Long questionId, String userEmail) {
+        User user = userRepository.findByInfoUser_Email(userEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new QuestionNotFoundException(questionId));
+        if (question.getUser().getUserId().equals(user.getUserId())) {
+            throw new UnauthorizedActionException("You cannot follow your own question");
+        }
+        FollowQuestion followQuestion = new FollowQuestion();
+        followQuestion.setUser(user);
+        followQuestion.setQuestion(question);
+        followQuestionRepository.save(followQuestion);
+    }
+    public void followAnswer(Long answerId, String userEmail) {
+        User user = userRepository.findByInfoUser_Email(userEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Answer answer = answerRepository.findById(answerId)
+                .orElseThrow(() -> new AnswerNotFoundException(answerId));
+        if (answer.getUser().getUserId().equals(user.getUserId())) {
+            throw new UnauthorizedActionException("You cannot follow your own answer");
+        }
+        FollowAnswer followAnswer = new FollowAnswer();
+        followAnswer.setUser(user);
+        followAnswer.setAnswer(answer);
+        followAnswerRepository.save(followAnswer);
+    }
+
+    public void unfollowTag(Long tagId, String userEmail) {
+        User user = userRepository.findByInfoUser_Email(userEmail)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        Tag tag = tagRepository.findById(tagId)
+                .orElseThrow(() -> new TagNotFoundException("Tag not found"));
+
+        FollowTag followTag = followTagRepository.findByUserAndTag(user, tag)
+                .orElseThrow(() -> new RuntimeException("Follow tag relationship not found"));
+
+        followTagRepository.delete(followTag);
+    }
+
+    public void unfollowQuestion(Long questionId, String userEmail) {
+        User user = userRepository.findByInfoUser_Email(userEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new QuestionNotFoundException(questionId));
+
+        FollowQuestion followQuestion = followQuestionRepository.findByUserAndQuestion(user, question)
+                .orElseThrow(() -> new FollowNotFoundException("User is not following this question"));
+
+        followQuestionRepository.delete(followQuestion);
+    }
+
+
+    public void unfollowAnswer(Long answerId, String userEmail) {
+        User user = userRepository.findByInfoUser_Email(userEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Answer answer = answerRepository.findById(answerId)
+                .orElseThrow(() -> new AnswerNotFoundException(answerId));
+
+        FollowAnswer followAnswer = followAnswerRepository.findByUserAndAnswer(user, answer)
+                .orElseThrow(() -> new RuntimeException("Follow answer relationship not found"));
+
+        followAnswerRepository.delete(followAnswer);
+    }
+
+
 }

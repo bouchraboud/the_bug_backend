@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 // Tag.java
 @Entity
@@ -40,4 +42,7 @@ public class Tag {
     public int hashCode() {
         return getClass().hashCode();
     }
+    @OneToMany(mappedBy = "tag", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FollowTag> followers = new ArrayList<>();
+
 }

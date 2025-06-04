@@ -5,7 +5,9 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "answers")
@@ -51,4 +53,7 @@ public class Answer {
     public int hashCode() {
         return getClass().hashCode();
     }
+    @OneToMany(mappedBy = "answer", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FollowAnswer> followers = new ArrayList<>();
+
 }

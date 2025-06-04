@@ -41,6 +41,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleUnauthorizedActionException(UnauthorizedActionException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
     }
+    @ExceptionHandler(TagNotFoundException.class)
+    public ResponseEntity<String> handleTagNotFoundException(TagNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
+    @ExceptionHandler(FollowNotFoundException.class)
+    public ResponseEntity<String> handleFollowNotFound(FollowNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
+
 
 
 }

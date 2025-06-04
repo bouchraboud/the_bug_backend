@@ -2,9 +2,7 @@ package theBugApp.backend.service;
 
 import lombok.RequiredArgsConstructor;
 
-
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +13,7 @@ import theBugApp.backend.entity.Question;
 import theBugApp.backend.entity.Tag;
 import theBugApp.backend.entity.User;
 import theBugApp.backend.entity.Vote;
+import theBugApp.backend.exception.UnauthorizedActionException;
 import theBugApp.backend.repository.QuestionRepository;
 import theBugApp.backend.repository.UserRepository;
 import theBugApp.backend.repository.VoteRepository;
@@ -34,9 +33,10 @@ public class QuestionServiceImpl implements QuestionService {
     private final UserRepository userRepository;
     private final TagService tagService;
     private final VoteRepository voteRepository;
-
+    private final NotificationService notificationService; // Add this dependency
 
     @Override
+    @Transactional
     public QuestionResponseDTO createQuestion(QuestionRequestDTO request, String userEmail) {
         User user = userRepository.findByInfoUser_Email(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -53,6 +53,10 @@ public class QuestionServiceImpl implements QuestionService {
         }
 
         Question savedQuestion = questionRepository.save(question);
+
+        // Send notifications to tag followers
+        notificationService.notifyNewQuestionWithTags(savedQuestion);
+
         return convertToResponseDTO(savedQuestion);
     }
 
@@ -74,6 +78,7 @@ public class QuestionServiceImpl implements QuestionService {
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
     }
+
     @Override
     public QuestionResponseDTO convertToResponseDTO(Question question) {
         // Calculate vote score
@@ -142,5 +147,31 @@ public class QuestionServiceImpl implements QuestionService {
                 .collect(Collectors.toList());
     }
 
+    // Add this method if you plan to implement question updates
+    @Transactional
+    @Override
+    public QuestionResponseDTO updateQuestion(Long questionId, QuestionRequestDTO request, String userEmail) {
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new RuntimeException("Question not found"));
 
+        // Check if the user is the question owner
+        if (!question.getUser().getInfoUser().getEmail().equals(userEmail)) {
+            throw new UnauthorizedActionException("Only the question owner can update the question");
+        }
+
+        question.setTitle(request.title());
+        question.setContent(request.content());
+
+        if (request.tagNames() != null && !request.tagNames().isEmpty()) {
+            Set<Tag> tags = tagService.getOrCreateTags(request.tagNames());
+            question.setTags(new HashSet<>(tags));
+        }
+
+        Question updatedQuestion = questionRepository.save(question);
+
+        // Send notifications about question update
+        notificationService.notifyQuestionUpdate(updatedQuestion);
+
+        return convertToResponseDTO(updatedQuestion);
+    }
 }

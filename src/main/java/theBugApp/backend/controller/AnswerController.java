@@ -87,6 +87,19 @@ public class AnswerController {
                     .body("You are not authorized to disaccept this answer");
         }
     }
+    // Add these methods to your AnswerController.java
+    @PutMapping("/{answerId}")
+    public ResponseEntity<AnswerResponseDTO> updateAnswer(
+            @PathVariable Long answerId,
+            @RequestBody AnswerRequestDTO answerRequest,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        Map<String, Object> claims = jwt.getClaim("claims");
+        String email = (String) claims.get("email");
+
+        AnswerResponseDTO updatedAnswer = answerService.updateAnswer(answerId, answerRequest, email);
+        return ResponseEntity.ok(updatedAnswer);
+    }
 
 
 }

@@ -14,4 +14,8 @@ public interface QuestionService {
 
     @Transactional(readOnly = true)
     List<QuestionResponseDTO> searchQuestions(String query, String tag, int page, int size);
+
+    // Add this method if you plan to implement question updates
+    @Transactional
+    QuestionResponseDTO updateQuestion(Long questionId, QuestionRequestDTO request, String userEmail);
 }

@@ -78,5 +78,21 @@ public class QuestionController {
         List<QuestionResponseDTO> responses = questionService.searchQuestions(query, tag, page, size);
         return ResponseEntity.ok(responses);
     }
+    // Add these methods to your QuestionController.java
+    @PutMapping("/{questionId}")
+    public ResponseEntity<QuestionResponseDTO> updateQuestion(
+            @PathVariable Long questionId,
+            @RequestBody QuestionRequestDTO questionRequest,
+            @AuthenticationPrincipal Jwt jwt) {
+        System.out.println("Updating question with id: " + questionId);
+        System.out.println("Updating question request: " + questionRequest);
+        System.out.println(jwt);
+        Map<String, Object> claims = jwt.getClaim("claims");
+        String email = (String) claims.get("email");
+        System.out.println(jwt);
+
+        QuestionResponseDTO updatedQuestion = questionService.updateQuestion(questionId, questionRequest, email);
+        return ResponseEntity.ok(updatedQuestion);
+    }
 
 }

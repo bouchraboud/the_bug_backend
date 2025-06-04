@@ -29,6 +29,7 @@ public class AnswerServiceImpl implements AnswerService {
     private final UserRepository userRepository;
     private final QuestionRepository questionRepository;
     private final VoteRepository voteRepository;
+    private final NotificationService notificationService; // Add this dependency
 
     @Override
     @Transactional
@@ -54,9 +55,11 @@ public class AnswerServiceImpl implements AnswerService {
         user.getAnswers().add(savedAnswer);
         userRepository.save(user);
 
+        // Send notifications to question followers
+        notificationService.notifyNewAnswer(question.getId(), savedAnswer);
+
         return convertToDTO(savedAnswer);
     }
-
 
     @Override
     @Transactional(readOnly = true)
@@ -96,6 +99,7 @@ public class AnswerServiceImpl implements AnswerService {
     }
 
     @Override
+    @Transactional
     public AnswerResponseDTO acceptAnswer(Long answerId, String userEmail) {
         Answer answer = answerRepository.findById(answerId)
                 .orElseThrow(() -> new AnswerNotFoundException(answerId));
@@ -110,10 +114,14 @@ public class AnswerServiceImpl implements AnswerService {
         answer.setAccepted(true);
         Answer updatedAnswer = answerRepository.save(answer);
 
+        // Send notifications about answer acceptance
+        notificationService.notifyAnswerAccepted(updatedAnswer);
+
         return convertToDTO(updatedAnswer);
     }
 
     @Override
+    @Transactional
     public AnswerResponseDTO disacceptAnswer(Long answerId, String userEmail) {
         // Retrieve the answer
         Answer answer = answerRepository.findById(answerId)
@@ -136,6 +144,24 @@ public class AnswerServiceImpl implements AnswerService {
         return convertToDTO(updatedAnswer);
     }
 
+    // Add this method if you plan to implement answer updates
+    @Transactional
+    @Override
+    public AnswerResponseDTO updateAnswer(Long answerId, AnswerRequestDTO answerRequest, String userEmail) {
+        Answer answer = answerRepository.findById(answerId)
+                .orElseThrow(() -> new AnswerNotFoundException(answerId));
 
+        // Check if the user is the answer owner
+        if (!answer.getUser().getInfoUser().getEmail().equals(userEmail)) {
+            throw new UnauthorizedActionException("Only the answer owner can update the answer");
+        }
 
+        answer.setContent(answerRequest.content());
+        Answer updatedAnswer = answerRepository.save(answer);
+
+        // Send notifications about answer update
+        notificationService.notifyAnswerUpdate(updatedAnswer);
+
+        return convertToDTO(updatedAnswer);
+    }
 }

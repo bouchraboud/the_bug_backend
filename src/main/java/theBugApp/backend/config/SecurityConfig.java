@@ -81,11 +81,12 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain jwtSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/questions")
+                .securityMatcher("/api/questions/**")
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/questions").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/questions").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/questions/**").permitAll()
+                        .anyRequest().authenticated()
                 )
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
@@ -169,6 +170,40 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/comments/**").permitAll()
 
                         // Any other request under /api/comments requires authentication by default
+                        .anyRequest().authenticated()
+                )
+                .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                );
+        return http.build();
+    }
+    @Bean
+    @Order(7)
+    public SecurityFilterChain followSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/follow/**")
+                .authorizeHttpRequests(auth -> auth
+                        // All follow endpoints require authentication
+                        .anyRequest().authenticated()
+                )
+                .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                );
+        return http.build();
+    }
+    @Bean
+    @Order(8)
+    public SecurityFilterChain notificationSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/notifications/**")
+                .authorizeHttpRequests(auth -> auth
+                        // All follow endpoints require authentication
                         .anyRequest().authenticated()
                 )
                 .csrf(csrf -> csrf.disable())
