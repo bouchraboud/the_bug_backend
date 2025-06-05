@@ -214,6 +214,26 @@ public class SecurityConfig {
                 );
         return http.build();
     }
+    @Bean
+    @Order(9)
+    public SecurityFilterChain reputationSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/reputation/**")
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/api/reputation/users/history").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/reputation/users/*/privileges").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/reputation/users/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/reputation/users/daily-limit").authenticated()
+                        .anyRequest().authenticated()
+                )
+                .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                );
+        return http.build();
+    }
 
 
 
