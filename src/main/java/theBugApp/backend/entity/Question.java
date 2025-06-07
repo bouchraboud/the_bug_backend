@@ -10,6 +10,7 @@ import java.util.*;
 // Question.java
 @Entity
 @Table(name = "questions")
+@Data
 @Getter
 @Setter
 @NoArgsConstructor

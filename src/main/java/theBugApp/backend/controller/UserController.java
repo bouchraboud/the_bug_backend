@@ -8,6 +8,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import theBugApp.backend.dto.AnswerResponseDTO;
 import theBugApp.backend.dto.QuestionResponseDTO;
 import theBugApp.backend.dto.UpdateUserDto;
@@ -15,6 +16,7 @@ import theBugApp.backend.dto.UserDto;
 import theBugApp.backend.entity.User;
 import theBugApp.backend.entity.UserConfirmationToken;
 import theBugApp.backend.exception.EmailNonValideException;
+import theBugApp.backend.exception.TokenNotFoundException;
 import theBugApp.backend.exception.UserNotFoundException;
 import theBugApp.backend.exception.UsernameExistsException;
 import theBugApp.backend.service.AnswerService;
@@ -32,6 +34,7 @@ import java.util.stream.Collectors;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import theBugApp.backend.repository.UserConfirmationTokenRepo;
 import theBugApp.backend.repository.UserRepository;
+
 
 
 @RestController
@@ -58,102 +61,126 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
+    @GetMapping("/users/me")
+    public ResponseEntity<?> getUserBytoken(@AuthenticationPrincipal Jwt jwt) {
+        try {
+            Map<String, Object> claims = jwt.getClaim("claims");
+            Long id = ((Number) claims.get("userId")).longValue();
+            UserDto user = userService.getUserById(id);
+            return ResponseEntity.ok().body(user);
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
 
     @PostMapping("/register/users")
     public ResponseEntity<?> saveUser(@RequestBody User user) {
         try {
-
             logger.info("Received request to register new user: " + user.getInfoUser().getUsername());
             UserDto savedUser = userService.saveUser(user);
             logger.info("Successfully registered user: " + user.getInfoUser().getUsername());
             return ResponseEntity.ok(savedUser);
-        } catch (EmailNonValideException | UsernameExistsException e) {
-            logger.warning("Failed to register user: " + e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (EmailNonValideException e) {
+            logger.warning("Failed to register user - email error: " + e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", e.getMessage(), "field", "email"));
+        } catch (UsernameExistsException e) {
+            logger.warning("Failed to register user - username error: " + e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", e.getMessage(), "field", "username"));
+        } catch (Exception e) {
+            logger.severe("Unexpected error during registration: " + e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "An unexpected error occurred"));
         }
     }
     @GetMapping("/register/users/confirmation")
     public ResponseEntity<?> confirmEmail(@RequestParam("token") String token) {
         try {
-            userService.confirmEmail(token);
-
-            // Page HTML avec postMessage qui envoie le token au frontend
-            String html = """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Confirmation</title>
-                <script>
-                    window.addEventListener('load', () => {
-                        // Envoie le token au frontend via postMessage
-                        window.opener?.postMessage({
-                            type: 'EMAIL_VERIFIED',
-                            token: '%s'
-                        }, 'http://localhost:3000'); // <- adapte l'URL à ton frontend
-                        setTimeout(() => window.close(), 1500);
-                    });
-                </script>
-            </head>
-            <body>
-                <h1>Votre adresse email a bien été confirmée.</h1>
-                <p>Cette fenêtre va se fermer automatiquement.</p>
-            </body>
-            </html>
-        """.formatted(token);
-
-            return ResponseEntity.ok().contentType(MediaType.TEXT_HTML).body(html);
-
+            userService.confirmEmail(token); // Your existing service method
+            return ResponseEntity.ok().body(Map.of(
+                    "success", true,
+                    "message", "Email confirmed successfully"
+            ));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()
+            ));
         }
     }
-
-    @PostMapping("/exchange-token")
+    @PostMapping("users/exchange-token")
     public ResponseEntity<?> exchangeToken(@RequestBody Map<String, String> body) {
+        // 1. Vérification du token dans la requête
         String token = body.get("token");
         if (token == null || token.isBlank()) {
-            return ResponseEntity.badRequest().body("Token manquant");
-        }
-        UserConfirmationToken confirmationToken = confirmationTokenRepo.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Token invalide"));
-        User user = confirmationToken.getUser();
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Utilisateur introuvable");
-        }
-        // Génération du JWT
-        Instant now = Instant.now();
-        String email = user.getInfoUser().getEmail();
-
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("username", user.getInfoUser().getUsername());
-        claims.put("email", email);
-        // Suppression du rôle
-        claims.put("userId", user.getUserId());
-        claims.put("reputation", user.getReputation());
-        claims.put("confirmed", user.isConfirmed());
-        if (user.getPhotoUrl() != null) {
-            claims.put("photoUrl", user.getPhotoUrl());
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Token is required"));
         }
 
-        JwtClaimsSet jwtClaimsSet = JwtClaimsSet.builder()
-                .issuer("theBugApp")
-                .issuedAt(now)
-                .expiresAt(now.plus(24, ChronoUnit.HOURS))
-                .subject(email)
-                .claim("claims", claims)
-                .build();
+        try {
+            // 2. Recherche du token en base de données
+            UserConfirmationToken confirmationToken = confirmationTokenRepo.findByToken(token)
+                    .orElseThrow(() -> new TokenNotFoundException("Invalid or expired token"));
 
-        JwtEncoderParameters jwtEncoderParameters = JwtEncoderParameters.from(
-                JwsHeader.with(MacAlgorithm.HS512).build(),
-                jwtClaimsSet
-        );
+            // 3. Vérification de l'utilisateur associé
+            User user = confirmationToken.getUser();
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No user associated with this token");
+            }
 
-        String jwt = jwtEncoder.encode(jwtEncoderParameters).getTokenValue();
+            // 4. Génération du JWT
+            Instant now = Instant.now();
+            String email = user.getInfoUser().getEmail();
 
-        // Supprime le token temporaire après usage
-        confirmationTokenRepo.delete(confirmationToken);
+            Map<String, Object> claims = new HashMap<>();
+            claims.put("username", user.getInfoUser().getUsername());
+            claims.put("email", email);
+            claims.put("userId", user.getUserId());
+            claims.put("reputation", user.getReputation());
+            claims.put("confirmed", user.isConfirmed());
 
-        return ResponseEntity.ok(Map.of("access-token", jwt));
+            if (user.getPhotoUrl() != null) {
+                claims.put("photoUrl", user.getPhotoUrl());
+            }
+
+            JwtClaimsSet jwtClaimsSet = JwtClaimsSet.builder()
+                    .issuer("theBugApp")
+                    .issuedAt(now)
+                    .expiresAt(now.plus(24, ChronoUnit.HOURS))
+                    .subject(email)
+                    .claim("claims", claims)
+                    .build();
+
+            JwtEncoderParameters jwtEncoderParameters = JwtEncoderParameters.from(
+                    JwsHeader.with(MacAlgorithm.HS512).build(),
+                    jwtClaimsSet
+            );
+
+            String jwt = jwtEncoder.encode(jwtEncoderParameters).getTokenValue();
+
+            // 5. Nettoyage du token temporaire
+            confirmationTokenRepo.delete(confirmationToken);
+
+            // 6. Retour du token JWT
+            return ResponseEntity.ok(Map.of(
+                    "access-token", jwt,
+                    "userId", user.getUserId(),
+                    "email", email
+            ));
+
+        } catch (TokenNotFoundException e) {
+            // Format de réponse spécifique pour token invalide/expiré
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "Invalid or expired token"));
+        } catch (Exception e) {
+            // Format cohérent pour les autres erreurs
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("message", "An error occurred while processing your request"));
+        }
     }
 
 
@@ -163,13 +190,18 @@ public class UserController {
             List<QuestionResponseDTO> questions = userService.getQuestionsByUserId(id);
             return ResponseEntity.ok(questions);
         } catch (UserNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "User not found"));
         }
     }
     @GetMapping("/users/{id}/answers")
-    public ResponseEntity<List<AnswerResponseDTO>> getAnswersByUser(
+    public ResponseEntity<?> getAnswersByUser(
             @PathVariable Long id) {
-        return ResponseEntity.ok(answerService.getAnswersByUserId(id));
+        try {
+            List<AnswerResponseDTO> answers = answerService.getAnswersByUserId(id);
+        return ResponseEntity.ok(answers);
+    } catch (UserNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "User not found"));
+    }
     }
     @PostMapping("/users/follow/{followingId}")
     public ResponseEntity<?> followUser(@PathVariable Long followingId, @AuthenticationPrincipal Jwt jwt) {

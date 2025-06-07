@@ -53,10 +53,11 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Order(1)
+    @Order(2)
     public SecurityFilterChain answersSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/answers/**")
+                .securityMatchers(matchers ->
+                        matchers.requestMatchers("/api/answers", "/api/answers/**"))
                 .authorizeHttpRequests(auth -> auth
                         // Secure POST endpoints (create answers)
                         .requestMatchers(HttpMethod.POST, "/api/answers").authenticated()
@@ -78,7 +79,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Order(2)
+    @Order(1)
     public SecurityFilterChain jwtSecurityFilterChain(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/api/questions/**")
@@ -134,7 +135,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
                         // Public endpoints - no authentication required
-                        .requestMatchers(HttpMethod.PUT, "/api/users").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/users/*/questions").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/*/answers").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/users/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users/exchange-token").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*/is-following/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*/followers").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*/following").permitAll()

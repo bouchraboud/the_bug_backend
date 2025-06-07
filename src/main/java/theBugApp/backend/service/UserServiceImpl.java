@@ -24,6 +24,7 @@ import theBugApp.backend.repository.UserRepository;
 import theBugApp.backend.dto.UpdateUserDto;
 
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -59,6 +60,8 @@ public class UserServiceImpl implements UserService {
 
         user.setReputation(0);
         user.setConfirmed(false);
+        user.setCreatedDate(LocalDateTime.now());
+        user.setLastSeen(LocalDateTime.now());
 
         User savedUser = userRepo.save(user);
         sendConfirmationEmailAsync(savedUser);
@@ -89,14 +92,16 @@ public class UserServiceImpl implements UserService {
         return 100000L + new Random().nextInt(900000);
     }
 
-
-    private void sendConfirmationEmailAsync(User user) {
+    @Transactional
+    @Override
+    public void sendConfirmationEmailAsync(User user) {
         String token = UUID.randomUUID().toString();
         // Use the constructor you already have
         UserConfirmationToken confirmationToken = new UserConfirmationToken(token, user);
         // Don't set the ID manually - let it be auto-generated
 
-        confirmationTokenRepo.save(confirmationToken);
+        UserConfirmationToken savedToken = confirmationTokenRepo.save(confirmationToken);
+        System.out.println("Saved token ID: " + savedToken.getId());
 
         // Use CompletableFuture instead of raw threads
         CompletableFuture.runAsync(() -> {
@@ -122,23 +127,44 @@ public class UserServiceImpl implements UserService {
 
         user.setConfirmed(true);
 
-        // Delete the token after use
-        confirmationTokenRepo.delete(confirmationToken);
+
 
         return userRepo.save(user);
     }
 
     @Override
     public void sendConfirmationEmail(String recipientEmail, String confirmationToken) {
-        String confirmationUrl = "http://localhost:8080/register/users/confirmation?token=" + confirmationToken;
-        String subject = "Confirmez votre adresse email";
-        String emailContent = "<p>Cher utilisateur,</p>"
-                + "<p>Veuillez cliquer sur le lien ci-dessous pour confirmer votre adresse email:</p>"
-                + "<p><a href=\"" + confirmationUrl + "\">Confirmer l'email</a></p>"
-                + "<p>Merci!</p>";
+        // Use environment variable for the backend URL
+        String confirmationUrl = "localhost:3000/confirm-email?token=" + confirmationToken;
+
+        String subject = "Confirm Your Email Address";
+        String emailContent = """
+    <html>
+    <body style="font-family: Arial, sans-serif;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+            <h2 style="color: #333;">Email Confirmation</h2>
+            <p>Dear User,</p>
+            <p>Thank you for registering. Please click below to confirm your email:</p>
+            <div style="margin: 25px 0; text-align: center;">
+                <a href="%s" style="background-color: #4CAF50; color: white; padding: 12px 20px; 
+                   text-decoration: none; border-radius: 4px; display: inline-block;">
+                    Confirm Email
+                </a>
+            </div>
+            <p>Ignore this email if you didn't create an account.</p>
+            <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+            <p style="font-size: 12px; color: #777;">
+                Link expires in 24 hours. Alternatively, paste this URL in your browser:
+            </p>
+            <p style="font-size: 12px; color: #777; word-break: break-all;">%s</p>
+        </div>
+    </body>
+    </html>
+    """.formatted(confirmationUrl, confirmationUrl);
 
         sendEmail(recipientEmail, subject, emailContent);
     }
+
 
     @Override
     public void sendEmail(String to, String subject, String htmlBody) {

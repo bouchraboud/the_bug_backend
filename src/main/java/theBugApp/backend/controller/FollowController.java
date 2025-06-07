@@ -5,6 +5,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import theBugApp.backend.entity.User;
+import theBugApp.backend.repository.UserRepository;
 import theBugApp.backend.service.FollowService;
 
 import java.util.Map;
@@ -15,6 +17,7 @@ import java.util.Map;
 public class FollowController {
 
     private final FollowService followService;
+    private final UserRepository userRepository;
 
     @PostMapping("/tags/{id}")
     public ResponseEntity<?> followTag(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
@@ -62,6 +65,35 @@ public class FollowController {
         String email = (String) claims.get("email");
         followService.unfollowAnswer(id, email);
         return ResponseEntity.ok("Answer unfollowed successfully");
+    }
+    // NEW GET endpoints
+    @GetMapping("/tags")
+    public ResponseEntity<?> getFollowedTags(@AuthenticationPrincipal Jwt jwt) {
+        Map<String, Object> claims = jwt.getClaim("claims");
+        String email = (String) claims.get("email");
+        userRepository.findByInfoUser_Email(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return ResponseEntity.ok(followService.getFollowedTags(email));
+    }
+
+    @GetMapping("/questions")
+    public ResponseEntity<?> getFollowedQuestions(@AuthenticationPrincipal Jwt jwt) {
+        Map<String, Object> claims = jwt.getClaim("claims");
+        String email = (String) claims.get("email");
+
+         userRepository.findByInfoUser_Email(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return ResponseEntity.ok(followService.getFollowedQuestions(email));
+    }
+
+    @GetMapping("/answers")
+    public ResponseEntity<?> getFollowedAnswers(@AuthenticationPrincipal Jwt jwt) {
+        Map<String, Object> claims = jwt.getClaim("claims");
+        String email = (String) claims.get("email");
+
+        userRepository.findByInfoUser_Email(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return ResponseEntity.ok(followService.getFollowedAnswers(email));
     }
 
 }

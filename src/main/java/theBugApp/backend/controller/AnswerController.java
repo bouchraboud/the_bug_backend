@@ -28,24 +28,17 @@ public class AnswerController {
     public ResponseEntity<?> createAnswer(
             @RequestBody AnswerRequestDTO answerRequest,
             @AuthenticationPrincipal Jwt jwt) {
-
-        // Debug logging
-        System.out.println("Creating answer for question ID: " + answerRequest.questionId());
-        System.out.println("Answer content: " + answerRequest.content());
-
         Map<String, Object> claims = jwt.getClaim("claims");
         String email = (String) claims.get("email");
-        System.out.println("User email: " + email);
-
         try {
             AnswerResponseDTO response = answerService.createAnswer(answerRequest, email);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (QuestionNotFoundException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Question with ID " + answerRequest.questionId() + " does not exist");
+                    .body(Map.of("message", "Question with ID " + answerRequest.questionId() + " does not exist"));
         } catch (UserNotFoundException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("User with email " + email + " does not exist");
+                    .body(Map.of("message", "User not found"));
         }
     }
 
@@ -62,10 +55,10 @@ public class AnswerController {
             return ResponseEntity.ok(response);
         } catch (AnswerNotFoundException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Answer with ID " + id + " does not exist");
+                    .body(Map.of("message", "Answer with ID " + id + " does not exist"));
         } catch (UnauthorizedActionException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("You are not authorized to accept this answer");
+                    .body(Map.of("message", "You are not authorized to accept this answer"));
         }
     }
     @PostMapping("/{id}/disaccept")
@@ -81,10 +74,10 @@ public class AnswerController {
             return ResponseEntity.ok(response);
         } catch (AnswerNotFoundException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Answer with ID " + id + " does not exist");
+                    .body(Map.of("message","Answer with ID " + id + " does not exist"));
         } catch (UnauthorizedActionException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("You are not authorized to disaccept this answer");
+                    .body(Map.of("message","You are not authorized to disaccept this answer"));
         }
     }
     // Add these methods to your AnswerController.java

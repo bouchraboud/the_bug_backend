@@ -13,6 +13,7 @@ import theBugApp.backend.entity.Question;
 import theBugApp.backend.entity.Tag;
 import theBugApp.backend.entity.User;
 import theBugApp.backend.entity.Vote;
+import theBugApp.backend.exception.QuestionNotFoundException;
 import theBugApp.backend.exception.UnauthorizedActionException;
 import theBugApp.backend.repository.QuestionRepository;
 import theBugApp.backend.repository.UserRepository;
@@ -63,7 +64,7 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public QuestionResponseDTO getQuestionById(Long id) {
         Question question = questionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Question not found"));
+                .orElseThrow(() -> new QuestionNotFoundException(id));
         return convertToResponseDTO(question);
     }
 

@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import theBugApp.backend.dto.AnswerResponseDTO;
 import theBugApp.backend.dto.QuestionRequestDTO;
 import theBugApp.backend.dto.QuestionResponseDTO;
+import theBugApp.backend.exception.QuestionNotFoundException;
+import theBugApp.backend.exception.UserNotFoundException;
 import theBugApp.backend.service.AnswerService;
 import theBugApp.backend.service.QuestionService;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +27,7 @@ public class QuestionController {
     private final AnswerService answerService;
 
     @PostMapping
-    public ResponseEntity<QuestionResponseDTO> createQuestion(
+    public ResponseEntity<?> createQuestion(
             @RequestBody QuestionRequestDTO questionRequestDTO,
             @AuthenticationPrincipal Jwt jwt) {
 
@@ -39,19 +41,28 @@ public class QuestionController {
 
         Map<String, Object> claims = jwt.getClaim("claims");
         String email = (String) claims.get("email");
-        System.out.println("User email: " + email);
 
-        QuestionResponseDTO response = questionService.createQuestion(questionRequestDTO, email);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        try {
+            QuestionResponseDTO response = questionService.createQuestion(questionRequestDTO, email);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (UserNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "User not found"));
+        }
     }
 
 
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<QuestionResponseDTO> getQuestion(@PathVariable Long id) {
-        QuestionResponseDTO response = questionService.getQuestionById(id);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<?> getQuestion(@PathVariable Long id) {
+        try {
+            QuestionResponseDTO response = questionService.getQuestionById(id);
+            return ResponseEntity.ok(response);
+        } catch (QuestionNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "Question with ID " + id + " does not exist"));
+        }
     }
 
     @GetMapping
@@ -61,9 +72,14 @@ public class QuestionController {
     }
 
     @GetMapping("/{questionId}/answers")
-    public ResponseEntity<List<AnswerResponseDTO>> getAnswersForQuestion(
-            @PathVariable Long questionId) {
-        return ResponseEntity.ok(answerService.getAnswersByQuestionId(questionId));
+    public ResponseEntity<?> getAnswersForQuestion(@PathVariable Long questionId) {
+        try {
+            List<AnswerResponseDTO> answers = answerService.getAnswersByQuestionId(questionId);
+            return ResponseEntity.ok(answers);
+        } catch (QuestionNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "Question with ID " + questionId + " does not exist"));
+        }
     }
 
     // Autres endpoints à ajouter selon les besoins...

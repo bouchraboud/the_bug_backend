@@ -3,13 +3,13 @@ package theBugApp.backend.service;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import theBugApp.backend.dto.UserDto;
+import theBugApp.backend.dto.*;
 import theBugApp.backend.entity.*;
 import theBugApp.backend.exception.*;
 import theBugApp.backend.mappers.UserMapper;
 import theBugApp.backend.repository.*;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +27,8 @@ public class FollowService {
     private final FollowQuestionRepository followQuestionRepository;
     private final AnswerRepository answerRepository;
     private final FollowAnswerRepository followAnswerRepository;
+    private final QuestionService questionService;
+    private final AnswerService answerService;
 
     // Suivre un utilisateur
     public boolean followUser(Long followerId, Long followingId) throws UserNotFoundException {
@@ -193,6 +195,59 @@ public class FollowService {
 
         followAnswerRepository.delete(followAnswer);
     }
+    @Transactional(readOnly = true)
+    public List<FullTagDTO> getFollowedTags(String userEmail) {
+        User user = userRepository.findByInfoUser_Email(userEmail)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        // Collect unique tags followed by the user, convert to DTOs
+        Set<FullTagDTO> uniqueTags = followTagRepository.findByUserUserId(user.getUserId())
+                .stream()
+                .map(FollowTag::getTag)
+                .map(this::convertToFullTagDTO)
+                .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(FullTagDTO::id))));
+
+        return new ArrayList<>(uniqueTags);
+    }
+
+    // Helper method to convert Tag entity to FullTagDTO
+    private FullTagDTO convertToFullTagDTO(Tag tag) {
+        // Assuming usageCount is a field or calculated; adjust as necessary
+        int usageCount =   tag.getQuestions().size(); // or compute it
+        return new FullTagDTO(tag.getId(), tag.getName(), usageCount);
+    }
+
+
+    @Transactional(readOnly = true)
+    public List<QuestionResponseDTO> getFollowedQuestions(String userEmail) {
+        User user = userRepository.findByInfoUser_Email(userEmail)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        // Use TreeSet to ensure uniqueness
+        Set<QuestionResponseDTO> uniqueQuestions = followQuestionRepository.findByUserUserId(user.getUserId())
+                .stream()
+                .map(followQuestion -> questionService.convertToResponseDTO(followQuestion.getQuestion()))
+                .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(QuestionResponseDTO::id))));
+
+        // Convert the Set to a List
+        return new ArrayList<>(uniqueQuestions);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AnswerResponseDTO> getFollowedAnswers(String userEmail) {
+        User user = userRepository.findByInfoUser_Email(userEmail)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        // Use TreeSet with Comparator by id for uniqueness and sorted order
+        Set<AnswerResponseDTO> uniqueAnswers = followAnswerRepository.findByUserUserId(user.getUserId())
+                .stream()
+                .map(FollowAnswer::getAnswer)
+                .map(answerService::convertToDTO)
+                .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(AnswerResponseDTO::id))));
+
+        return new ArrayList<>(uniqueAnswers);
+    }
+
 
 
 }

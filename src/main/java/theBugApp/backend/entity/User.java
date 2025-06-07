@@ -78,8 +78,11 @@ public class User {
     private String portfolioLink;
     @Column(name = "created_date",  updatable = false)
     private LocalDateTime createdDate;
+    @Column(name = "last_seen")
+    private LocalDateTime lastSeen;
     @Column(name = "about", columnDefinition = "TEXT")
     private String about;
+
 
 
 }

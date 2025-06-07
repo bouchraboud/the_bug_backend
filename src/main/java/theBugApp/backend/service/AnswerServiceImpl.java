@@ -81,6 +81,9 @@ public class AnswerServiceImpl implements AnswerService {
     @Override
     @Transactional(readOnly = true)
     public List<AnswerResponseDTO> getAnswersByQuestionId(Long questionId) {
+        if (!questionRepository.existsById(questionId)) {
+            throw new QuestionNotFoundException(questionId);
+        }
         return answerRepository.findByQuestionId(questionId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -89,12 +92,15 @@ public class AnswerServiceImpl implements AnswerService {
     @Override
     @Transactional(readOnly = true)
     public List<AnswerResponseDTO> getAnswersByUserId(Long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new UserNotFoundException("User not found with id: " + userId);
+        }
         return answerRepository.findByUserId(userId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
-
-    private AnswerResponseDTO convertToDTO(Answer answer) {
+    @Override
+    public AnswerResponseDTO convertToDTO(Answer answer) {
         List<Vote> votes = voteRepository.findByAnswer(answer);
         int voteScore = (votes != null)
                 ? votes.stream()
@@ -241,7 +247,7 @@ public class AnswerServiceImpl implements AnswerService {
         User user = userRepository.findByInfoUser_Email(userEmail)
                 .orElseThrow(() -> new UserNotFoundException(userEmail));
 
-        // Check if user is the owner or has delete privileges
+        // Check if user is the owner or has privileges
         boolean isOwner = answer.getUser().getUserId().equals(user.getUserId());
         boolean canDelete = reputationService.canDelete(user.getUserId());
 

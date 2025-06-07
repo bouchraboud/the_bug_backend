@@ -18,9 +18,13 @@ public class UserDto {
     // Nouveau champ country
     private Country country;
     private LocalDateTime createdDate;
+    private LocalDateTime lastSeen;
     private String githubLink;
     private String portfolioLink;
     private String about;
     private int questionCount;
     private int voteCount;
+    private int answerCount;
+    private int reachedCount;
+
 }
