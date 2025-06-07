@@ -134,37 +134,35 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void sendConfirmationEmail(String recipientEmail, String confirmationToken) {
-        // Use environment variable for the backend URL
-        String confirmationUrl = "localhost:3000/confirm-email?token=" + confirmationToken;
+        String confirmationUrl = "http://localhost:3000/confirm-email?token=" + confirmationToken;
 
         String subject = "Confirm Your Email Address";
         String emailContent = """
-    <html>
-    <body style="font-family: Arial, sans-serif;">
-        <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-            <h2 style="color: #333;">Email Confirmation</h2>
-            <p>Dear User,</p>
-            <p>Thank you for registering. Please click below to confirm your email:</p>
-            <div style="margin: 25px 0; text-align: center;">
-                <a href="%s" style="background-color: #4CAF50; color: white; padding: 12px 20px; 
-                   text-decoration: none; border-radius: 4px; display: inline-block;">
-                    Confirm Email
-                </a>
-            </div>
-            <p>Ignore this email if you didn't create an account.</p>
-            <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
-            <p style="font-size: 12px; color: #777;">
-                Link expires in 24 hours. Alternatively, paste this URL in your browser:
-            </p>
-            <p style="font-size: 12px; color: #777; word-break: break-all;">%s</p>
+<html>
+<body style="font-family: Arial, sans-serif;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+        <h2 style="color: #333;">Email Confirmation</h2>
+        <p>Dear User,</p>
+        <p>Thank you for registering. Please click below to confirm your email:</p>
+        <div style="margin: 25px 0; text-align: center;">
+            <a href="%s" style="background-color: #4CAF50; color: white; padding: 12px 20px; 
+               text-decoration: none; border-radius: 4px; display: inline-block;">
+                Confirm Email
+            </a>
         </div>
-    </body>
-    </html>
-    """.formatted(confirmationUrl, confirmationUrl);
+        <p>Ignore this email if you didn't create an account.</p>
+        <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+        <p style="font-size: 12px; color: #777;">
+            Link expires in 24 hours. Alternatively, paste this URL in your browser:
+        </p>
+        <p style="font-size: 12px; color: #777; word-break: break-all;">%s</p>
+    </div>
+</body>
+</html>
+""".formatted(confirmationUrl, confirmationUrl);
 
         sendEmail(recipientEmail, subject, emailContent);
     }
-
 
     @Override
     public void sendEmail(String to, String subject, String htmlBody) {
