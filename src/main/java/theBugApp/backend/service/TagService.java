@@ -2,11 +2,13 @@ package theBugApp.backend.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import theBugApp.backend.dto.AnswerResponseDTO;
 import theBugApp.backend.dto.FullTagDTO;
 import theBugApp.backend.dto.QuestionResponseDTO;
 import theBugApp.backend.dto.SimpleTagDTO;
 import theBugApp.backend.entity.Question;
 import theBugApp.backend.entity.Tag;
+import theBugApp.backend.repository.AnswerRepository;
 import theBugApp.backend.repository.QuestionRepository;
 import theBugApp.backend.repository.TagRepository;
 
@@ -18,10 +20,13 @@ import java.util.stream.Collectors;
 public class TagService {
     private final TagRepository tagRepository;
     private final QuestionRepository questionRepository;
-
-    public TagService(TagRepository tagRepository, QuestionRepository questionRepository) {
+    private final AnswerRepository answerRepository;
+    private final AnswerService answerService;
+    public TagService(TagRepository tagRepository, QuestionRepository questionRepository, AnswerRepository answerRepository,AnswerService answerService) {
         this.tagRepository = tagRepository;
         this.questionRepository = questionRepository;
+        this.answerRepository=answerRepository;
+        this.answerService=answerService;
     }
 
     @Transactional
@@ -100,6 +105,9 @@ public class TagService {
         Set<SimpleTagDTO> tagDTOs = tagNames.stream()
                 .map(SimpleTagDTO::new)
                 .collect(Collectors.toSet());
+        List<AnswerResponseDTO> answerDTOs = answerRepository.findByQuestionId(question.getId()).stream()
+                .map(answerService::convertToDTO)
+                .collect(Collectors.toList());
 
         return new QuestionResponseDTO(
                 question.getId(),
@@ -112,7 +120,8 @@ public class TagService {
                 0, // viewCount
                 0, // voteScore
                 question.getAnswers().size(),
-                tagDTOs
+                tagDTOs,
+                answerDTOs
         );
     }
 }

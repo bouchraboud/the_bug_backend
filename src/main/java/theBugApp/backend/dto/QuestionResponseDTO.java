@@ -2,6 +2,7 @@ package theBugApp.backend.dto;
 
 
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 public record QuestionResponseDTO(
@@ -15,5 +16,6 @@ public record QuestionResponseDTO(
         int viewCount,
         int voteScore,
         int answerCount,  // Add this field
-        Set<SimpleTagDTO> tags// Plus tard: List<TagDTO> tags, List<AnswerDTO> answers, etc.
+        Set<SimpleTagDTO> tags,// Plus tard: List<TagDTO> tags, List<AnswerDTO> answers, etc.
+        List<AnswerResponseDTO> answers
 ) {}

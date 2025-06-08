@@ -6,6 +6,7 @@ import org.springframework.data.domain.PageRequest;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import theBugApp.backend.dto.AnswerResponseDTO;
 import theBugApp.backend.dto.QuestionResponseDTO;
 import theBugApp.backend.dto.QuestionRequestDTO;
 import theBugApp.backend.dto.SimpleTagDTO;
@@ -15,6 +16,7 @@ import theBugApp.backend.entity.User;
 import theBugApp.backend.entity.Vote;
 import theBugApp.backend.exception.QuestionNotFoundException;
 import theBugApp.backend.exception.UnauthorizedActionException;
+import theBugApp.backend.repository.AnswerRepository;
 import theBugApp.backend.repository.QuestionRepository;
 import theBugApp.backend.repository.UserRepository;
 import theBugApp.backend.repository.VoteRepository;
@@ -35,7 +37,8 @@ public class QuestionServiceImpl implements QuestionService {
     private final TagService tagService;
     private final VoteRepository voteRepository;
     private final NotificationService notificationService; // Add this dependency
-
+    private final AnswerRepository answerRepository;
+    private final AnswerService answerService;
     @Override
     @Transactional
     public QuestionResponseDTO createQuestion(QuestionRequestDTO request, String userEmail) {
@@ -111,6 +114,9 @@ public class QuestionServiceImpl implements QuestionService {
             // Fall back to empty set if there's any problem
             System.out.println("Error processing tags for question ID " + question.getId() + ": " + e.getMessage());
         }
+        List<AnswerResponseDTO> answerDTOs = answerRepository.findByQuestionId(question.getId()).stream()
+                .map(answerService::convertToDTO)
+                .collect(Collectors.toList());
 
         return new QuestionResponseDTO(
                 question.getId(),
@@ -123,7 +129,8 @@ public class QuestionServiceImpl implements QuestionService {
                 0, // viewCount
                 voteScore, // Now includes actual vote score
                 question.getAnswers().size(),
-                tagDTOs
+                tagDTOs,
+                answerDTOs
         );
     }
     @Transactional(readOnly = true)
