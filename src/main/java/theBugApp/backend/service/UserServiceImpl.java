@@ -114,21 +114,14 @@ public class UserServiceImpl implements UserService {
     public User confirmEmail(String token) {
         UserConfirmationToken confirmationToken = confirmationTokenRepo.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Token de confirmation invalide"));
-
         if (new Date().getTime() - confirmationToken.getCreatedDate().getTime() > EXPIRATION_TIME_MS) {
             throw new RuntimeException("Le token de confirmation a expiré");
         }
-
-        // Get user directly from the token's relationship
         User user = confirmationToken.getUser();
         if (user == null) {
             throw new RuntimeException("Utilisateur non trouvé");
         }
-
         user.setConfirmed(true);
-
-
-
         return userRepo.save(user);
     }
 
