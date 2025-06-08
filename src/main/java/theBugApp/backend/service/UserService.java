@@ -15,6 +15,8 @@ import java.util.List;
 public interface UserService {
     UserDto saveUser(User user) throws EmailNonValideException, UsernameExistsException;
 
+    List<UserDto> getAllUsers();
+
     @Transactional
     void sendConfirmationEmailAsync(User user);
 

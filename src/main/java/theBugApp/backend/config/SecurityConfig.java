@@ -131,10 +131,11 @@ public class SecurityConfig {
     @Order(5) // Ou un ordre approprié
     public SecurityFilterChain usersSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("api/users/**")
-                .authorizeHttpRequests(auth -> auth
 
-                        // Public endpoints - no authentication required
+                .securityMatchers(matchers ->
+                        matchers.requestMatchers("api/users", "api/users/**"))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/api/users").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/users/*/questions").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*/answers").permitAll()

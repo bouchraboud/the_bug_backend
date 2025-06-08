@@ -58,9 +58,14 @@ public class TagService {
         return allTags;
     }
 
-    public List<SimpleTagDTO> getAllTags() {
+    public List<FullTagDTO> getAllTags() {
         return tagRepository.findAll().stream()
-                .map(tag -> new SimpleTagDTO(tag.getName()))
+                .map(tag -> new FullTagDTO(
+                tag.getId(),
+                tag.getName(),tag.getDescription(),
+                tag.getQuestions().size()))
+                .sorted((t1, t2) -> Integer.compare(t2.usageCount(), t1.usageCount()))
+                .limit(20)
                 .collect(Collectors.toList());
     }
 
@@ -68,7 +73,7 @@ public class TagService {
         return tagRepository.findAll().stream()
                 .map(tag -> new FullTagDTO(
                         tag.getId(),
-                        tag.getName(),
+                        tag.getName(),tag.getDescription(),
                         tag.getQuestions().size()))
                 .sorted((t1, t2) -> Integer.compare(t2.usageCount(), t1.usageCount()))
                 .limit(20)

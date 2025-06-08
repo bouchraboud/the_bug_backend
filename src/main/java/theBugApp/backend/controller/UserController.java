@@ -51,6 +51,16 @@ public class UserController {
     private final FollowService followService; // Nouveau service
 
 
+    @GetMapping("/users")
+    public ResponseEntity<?> getAllUsers() {
+        try {
+            List<UserDto> users = userService.getAllUsers();
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to retrieve users"));
+        }
+    }
 
     @GetMapping("/users/{id}")
     public ResponseEntity<?> getUserById(@PathVariable(value = "id") Long id) {

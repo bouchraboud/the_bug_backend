@@ -47,6 +47,7 @@ public class UserServiceImpl implements UserService {
     private final UserConfirmationTokenRepo confirmationTokenRepo;
     private final QuestionRepository questionRepository;
     private final QuestionService questionService;
+    private final UserRepository userRepository;
 
 
     @Override
@@ -68,6 +69,15 @@ public class UserServiceImpl implements UserService {
 
         return userMapper.toUserDto(savedUser);
     }
+
+    @Override
+    public List<UserDto> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        return users.stream()
+                .map(userMapper::toUserDto) // your conversion method
+                .collect(Collectors.toList());
+    }
+
 
 
 

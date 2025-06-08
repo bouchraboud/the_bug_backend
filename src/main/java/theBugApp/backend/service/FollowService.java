@@ -242,7 +242,7 @@ public class FollowService {
     private FullTagDTO convertToFullTagDTO(Tag tag) {
         // Assuming usageCount is a field or calculated; adjust as necessary
         int usageCount =   tag.getQuestions().size(); // or compute it
-        return new FullTagDTO(tag.getId(), tag.getName(), usageCount);
+        return new FullTagDTO(tag.getId(), tag.getName(),tag.getDescription(), usageCount);
     }
 
 
