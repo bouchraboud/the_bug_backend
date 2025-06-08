@@ -23,8 +23,6 @@ public class Tag {
     @Column(unique = true, nullable = false)
     private String name;
 
-    @Column(length = 500) // Optional: Limit the length of the description
-    private String description;
 
     @ManyToMany(mappedBy = "tags", fetch = FetchType.LAZY)
     private Set<Question> questions = new HashSet<>();

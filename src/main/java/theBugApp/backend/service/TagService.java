@@ -2,13 +2,12 @@ package theBugApp.backend.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import theBugApp.backend.dto.AnswerResponseDTO;
-import theBugApp.backend.dto.FullTagDTO;
-import theBugApp.backend.dto.QuestionResponseDTO;
-import theBugApp.backend.dto.SimpleTagDTO;
+import theBugApp.backend.dto.*;
 import theBugApp.backend.entity.Question;
 import theBugApp.backend.entity.Tag;
+import theBugApp.backend.mappers.UserMapper;
 import theBugApp.backend.repository.AnswerRepository;
+import theBugApp.backend.repository.FollowTagRepository;
 import theBugApp.backend.repository.QuestionRepository;
 import theBugApp.backend.repository.TagRepository;
 
@@ -22,11 +21,16 @@ public class TagService {
     private final QuestionRepository questionRepository;
     private final AnswerRepository answerRepository;
     private final AnswerService answerService;
-    public TagService(TagRepository tagRepository, QuestionRepository questionRepository, AnswerRepository answerRepository,AnswerService answerService) {
+    private final FollowTagRepository followTagRepository;
+    private final UserMapper userMapper;
+
+    public TagService(TagRepository tagRepository, QuestionRepository questionRepository, AnswerRepository answerRepository, AnswerService answerService, FollowTagRepository followTagRepository, UserMapper userMapper) {
         this.tagRepository = tagRepository;
         this.questionRepository = questionRepository;
         this.answerRepository=answerRepository;
         this.answerService=answerService;
+        this.followTagRepository = followTagRepository;
+        this.userMapper = userMapper;
     }
 
     @Transactional
@@ -60,25 +64,62 @@ public class TagService {
 
     public List<FullTagDTO> getAllTags() {
         return tagRepository.findAll().stream()
-                .map(tag -> new FullTagDTO(
-                tag.getId(),
-                tag.getName(),tag.getDescription(),
-                tag.getQuestions().size()))
+                .map(tag -> {
+                    List<UserDto> followersDtos = followTagRepository.findFollowersByTagId(tag.getId()).stream()
+                            .map(userMapper::toUserDto)
+                            .collect(Collectors.toList());
+
+                    int followersCount = followersDtos.size();
+
+                    List<QuestionResponseDTO> questionDTOs = tag.getQuestions().stream()
+                            .map(this::convertQuestionToDTO)
+                            .collect(Collectors.toList());
+
+                    return new FullTagDTO(
+                            tag.getId(),
+                            tag.getName(),
+                            tag.getQuestions().size(),
+                            followersCount,
+                            followersDtos,
+                            questionDTOs
+                    );
+                })
                 .sorted((t1, t2) -> Integer.compare(t2.usageCount(), t1.usageCount()))
                 .limit(20)
                 .collect(Collectors.toList());
     }
 
+
+
+
     public List<FullTagDTO> getPopularTags() {
         return tagRepository.findAll().stream()
-                .map(tag -> new FullTagDTO(
-                        tag.getId(),
-                        tag.getName(),tag.getDescription(),
-                        tag.getQuestions().size()))
+                .map(tag -> {
+                    List<UserDto> followersDtos = followTagRepository.findFollowersByTagId(tag.getId()).stream()
+                            .map(userMapper::toUserDto)
+                            .collect(Collectors.toList());
+
+                    int followersCount = followersDtos.size();
+
+                    List<QuestionResponseDTO> questionDTOs = tag.getQuestions().stream()
+                            .map(this::convertQuestionToDTO)
+                            .collect(Collectors.toList());
+
+                    return new FullTagDTO(
+                            tag.getId(),
+                            tag.getName(),
+                            tag.getQuestions().size(),
+                            followersCount,
+                            followersDtos,
+                            questionDTOs
+                    );
+                })
                 .sorted((t1, t2) -> Integer.compare(t2.usageCount(), t1.usageCount()))
                 .limit(20)
                 .collect(Collectors.toList());
     }
+
+
 
     public List<QuestionResponseDTO> getQuestionsByTagName(String tagName) {
         return tagRepository.findByName(tagName.toLowerCase().trim())
@@ -105,7 +146,7 @@ public class TagService {
         return tagsMap;
     }
 
-    private QuestionResponseDTO convertQuestionToDTO(Question question) {
+    QuestionResponseDTO convertQuestionToDTO(Question question) {
         Set<String> tagNames = getTagsByQuestionId(question.getId());
         Set<SimpleTagDTO> tagDTOs = tagNames.stream()
                 .map(SimpleTagDTO::new)

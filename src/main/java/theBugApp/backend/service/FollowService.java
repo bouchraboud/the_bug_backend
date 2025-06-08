@@ -29,6 +29,7 @@ public class FollowService {
     private final FollowAnswerRepository followAnswerRepository;
     private final QuestionService questionService;
     private final AnswerService answerService;
+    private final TagService tagService;
 
     // Suivre un utilisateur
     public boolean followUser(Long followerId, Long followingId) throws UserNotFoundException {
@@ -241,8 +242,15 @@ public class FollowService {
     // Helper method to convert Tag entity to FullTagDTO
     private FullTagDTO convertToFullTagDTO(Tag tag) {
         // Assuming usageCount is a field or calculated; adjust as necessary
+        List<UserDto> followersDtos = followTagRepository.findFollowersByTagId(tag.getId()).stream()
+                .map(userMapper::toUserDto)   // Use UserMapper here
+                .collect(Collectors.toList());
+        int followersCount = followersDtos.size();
+        List<QuestionResponseDTO> questionDTOs = tag.getQuestions().stream()
+                .map(tagService::convertQuestionToDTO)
+                .collect(Collectors.toList());
         int usageCount =   tag.getQuestions().size(); // or compute it
-        return new FullTagDTO(tag.getId(), tag.getName(),tag.getDescription(), usageCount);
+        return new FullTagDTO(tag.getId(), tag.getName(), usageCount,followersCount,followersDtos,questionDTOs);
     }
 
 
