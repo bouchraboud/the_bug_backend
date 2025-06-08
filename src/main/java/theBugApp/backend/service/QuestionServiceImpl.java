@@ -34,7 +34,7 @@ public class QuestionServiceImpl implements QuestionService {
     private final UserRepository userRepository;
     private final TagService tagService;
     private final VoteRepository voteRepository;
-    private final NotificationService notificationService; // Add this dependency
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -45,22 +45,20 @@ public class QuestionServiceImpl implements QuestionService {
         Question question = new Question();
         question.setTitle(request.title());
         question.setContent(request.content());
+
+
         question.setUser(user);
 
         if (request.tagNames() != null && !request.tagNames().isEmpty()) {
             Set<Tag> tags = tagService.getOrCreateTags(request.tagNames());
-            // Create a new HashSet to avoid potential Hibernate proxy issues
             question.setTags(new HashSet<>(tags));
         }
 
         Question savedQuestion = questionRepository.save(question);
-
-        // Send notifications to tag followers
         notificationService.notifyNewQuestionWithTags(savedQuestion);
 
         return convertToResponseDTO(savedQuestion);
     }
-
     @Override
     public QuestionResponseDTO getQuestionById(Long id) {
         Question question = questionRepository.findById(id)
