@@ -30,18 +30,14 @@ public class QuestionController {
     public ResponseEntity<?> createQuestion(
             @RequestBody QuestionRequestDTO questionRequestDTO,
             @AuthenticationPrincipal Jwt jwt) {
-
-        // Debug logging
         System.out.println("Creating question with title: " + questionRequestDTO.title());
         if (questionRequestDTO.tagNames() != null) {
             System.out.println("Tags submitted: " + String.join(", ", questionRequestDTO.tagNames()));
         } else {
             System.out.println("No tags submitted");
         }
-
         Map<String, Object> claims = jwt.getClaim("claims");
         String email = (String) claims.get("email");
-
         try {
             QuestionResponseDTO response = questionService.createQuestion(questionRequestDTO, email);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -82,8 +78,6 @@ public class QuestionController {
         }
     }
 
-    // Autres endpoints à ajouter selon les besoins...
-
     @GetMapping("/search")
     public ResponseEntity<List<QuestionResponseDTO>> searchQuestions(
             @RequestParam(required = false) String query,
@@ -94,7 +88,6 @@ public class QuestionController {
         List<QuestionResponseDTO> responses = questionService.searchQuestions(query, tag, page, size);
         return ResponseEntity.ok(responses);
     }
-    // Add these methods to your QuestionController.java
     @PutMapping("/{questionId}")
     public ResponseEntity<QuestionResponseDTO> updateQuestion(
             @PathVariable Long questionId,

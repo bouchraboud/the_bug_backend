@@ -30,9 +30,9 @@ public class InfoUser {
     @EqualsAndHashCode.Exclude  // <-- Exclure cette relation aussi
     private User user;
 
-//    @Column(name = "oauth_provider")
-//    private String provider;
-//
-//    @Column(name = "oauth_id")
-//    private String providerId;
+    @Column(name = "oauth_provider")
+    private String provider;
+
+    @Column(name = "oauth_id")
+    private String providerId;
 }

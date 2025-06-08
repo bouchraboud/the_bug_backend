@@ -31,7 +31,7 @@ public class User {
 
     private String photoUrl;
 
-    private int reputation = 0;
+    private int reputation = 1;
 
     @Version
     private Long version;

@@ -18,6 +18,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.web.bind.annotation.*;
 
 import theBugApp.backend.dto.AuthRequest;
+import theBugApp.backend.dto.UserDto;
 import theBugApp.backend.entity.User;
 import theBugApp.backend.exception.UserNotFoundException;
 import theBugApp.backend.repository.UserRepository;
@@ -41,33 +42,26 @@ public class AuthController {
     private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
     private final JwtEncoder jwtEncoder;
+    private final UserService userService;
 
     @PostMapping("/login/user")
-    public ResponseEntity<Map<String, String>> login(@RequestBody AuthRequest request) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody AuthRequest request) {
         String email = request.getEmail();
         String password = request.getPassword();
 
         logger.info("Login attempt for user: " + email);
 
         try {
-            // First check if user exists
             User user = userRepository.findByInfoUser_Email(email)
                     .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
-
-            // Then check if email is confirmed
             if (!user.isConfirmed()) {
                 logger.warning("Email not confirmed for user: " + email);
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("error", "Email is not confirmed. Please verify your email."));
             }
-
-            // Now authenticate the user
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password)
             );
-
-            // (JWT token creation code here, same as before)
-
             Instant instant = Instant.now();
 
             String scope = authentication.getAuthorities().stream()
@@ -100,7 +94,12 @@ public class AuthController {
 
             String jwt = jwtEncoder.encode(jwtEncoderParameters).getTokenValue();
             logger.info("Successfully generated JWT token for user: " + email);
-            return ResponseEntity.ok(Map.of("access-token", jwt));
+            UserDto userdto = userService.getUserById(user.getUserId());
+            Map<String, Object> response = Map.of(
+                    "access-token", jwt,
+                    "user", userdto
+            );
+            return ResponseEntity.ok(response);
 
         } catch (DisabledException ex) {
             logger.warning("User account is disabled: " + email);

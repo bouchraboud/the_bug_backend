@@ -58,7 +58,7 @@ public class UserServiceImpl implements UserService {
         // Set up bidirectional relationship
         info.setUser(user);
 
-        user.setReputation(0);
+        user.setReputation(1);
         user.setConfirmed(false);
         user.setCreatedDate(LocalDateTime.now());
         user.setLastSeen(LocalDateTime.now());
