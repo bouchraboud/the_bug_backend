@@ -20,4 +20,7 @@ public interface FollowAnswerRepository extends JpaRepository<FollowAnswer, Long
     @Query("SELECT fa.user FROM FollowAnswer fa WHERE fa.answer.id = :answerId")
     List<User> findFollowersByAnswerId(@Param("answerId") Long answerId);
     Optional<FollowAnswer> findByUserAndAnswer(User user, Answer answer);
+
+    boolean existsByUserAndAnswer(User user, Answer answer);
+
 }

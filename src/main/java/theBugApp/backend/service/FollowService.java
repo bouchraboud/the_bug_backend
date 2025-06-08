@@ -122,6 +122,12 @@ public class FollowService {
         Tag tag = tagRepository.findById(tagId)
                 .orElseThrow(() -> new TagNotFoundException("Tag not found"));
 
+        // Check if already followed
+        boolean alreadyFollowing = followTagRepository.existsByUserAndTag(user, tag);
+        if (alreadyFollowing) {
+            throw new AlreadyFollowingException("You are already following this tag");
+        }
+
         FollowTag followTag = new FollowTag();
         followTag.setUser(user);
         followTag.setTag(tag);
@@ -132,29 +138,51 @@ public class FollowService {
     public void followQuestion(Long questionId, String userEmail) {
         User user = userRepository.findByInfoUser_Email(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(questionId));
+
         if (question.getUser().getUserId().equals(user.getUserId())) {
             throw new UnauthorizedActionException("You cannot follow your own question");
         }
+
+        // Check if already followed
+        boolean alreadyFollowing = followQuestionRepository.existsByUserAndQuestion(user, question);
+        if (alreadyFollowing) {
+            throw new AlreadyFollowingException("You are already following this question");
+        }
+
         FollowQuestion followQuestion = new FollowQuestion();
         followQuestion.setUser(user);
         followQuestion.setQuestion(question);
+
         followQuestionRepository.save(followQuestion);
     }
+
     public void followAnswer(Long answerId, String userEmail) {
         User user = userRepository.findByInfoUser_Email(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
         Answer answer = answerRepository.findById(answerId)
                 .orElseThrow(() -> new AnswerNotFoundException(answerId));
+
         if (answer.getUser().getUserId().equals(user.getUserId())) {
             throw new UnauthorizedActionException("You cannot follow your own answer");
         }
+
+        // Check if already followed
+        boolean alreadyFollowing = followAnswerRepository.existsByUserAndAnswer(user, answer);
+        if (alreadyFollowing) {
+            throw new AlreadyFollowingException("You are already following this answer");
+        }
+
         FollowAnswer followAnswer = new FollowAnswer();
         followAnswer.setUser(user);
         followAnswer.setAnswer(answer);
+
         followAnswerRepository.save(followAnswer);
     }
+
 
     public void unfollowTag(Long tagId, String userEmail) {
         User user = userRepository.findByInfoUser_Email(userEmail)

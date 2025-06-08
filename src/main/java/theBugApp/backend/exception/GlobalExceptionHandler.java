@@ -67,6 +67,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleTokenNotFound(TokenNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
+    @ExceptionHandler(AlreadyFollowingException.class)
+    public ResponseEntity<String> handleAlreadyFollowingException(AlreadyFollowingException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
 
 
 

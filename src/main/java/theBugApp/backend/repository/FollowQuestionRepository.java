@@ -24,4 +24,8 @@ public interface FollowQuestionRepository extends JpaRepository<FollowQuestion, 
     List<User> findFollowersByQuestionId(@Param("questionId") Long questionId);
 
     Optional<FollowQuestion> findByUserAndQuestion(User user, Question question);
+
+    boolean existsByUserAndQuestion(User user, Question question);
+
+
 }

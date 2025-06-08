@@ -23,6 +23,8 @@ public interface FollowTagRepository extends JpaRepository<FollowTag, Long> {
     @Query("SELECT ft.user FROM FollowTag ft WHERE ft.tag.id = :tagId")
     List<User> findFollowersByTagId(@Param("tagId") Long tagId);
     Optional<FollowTag> findByUserAndTag(User user, Tag tag);
+    boolean existsByUserAndTag(User user, Tag tag);
+
 
 
 }
