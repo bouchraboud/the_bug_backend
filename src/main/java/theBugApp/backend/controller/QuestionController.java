@@ -11,6 +11,7 @@ import theBugApp.backend.dto.QuestionResponseDTO;
 import theBugApp.backend.exception.QuestionNotFoundException;
 import theBugApp.backend.exception.UserNotFoundException;
 import theBugApp.backend.service.AnswerService;
+import theBugApp.backend.service.LexicalContentProcessor;
 import theBugApp.backend.service.QuestionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -30,14 +31,21 @@ public class QuestionController {
     public ResponseEntity<?> createQuestion(
             @RequestBody QuestionRequestDTO questionRequestDTO,
             @AuthenticationPrincipal Jwt jwt) {
+
         System.out.println("Creating question with title: " + questionRequestDTO.title());
+        LexicalContentProcessor lexicalProcessor = new LexicalContentProcessor();
+        System.out.println("Content type: " + (lexicalProcessor.isLexicalJson(questionRequestDTO.content())
+                ? "Lexical JSON" : "Plain text"));
+
         if (questionRequestDTO.tagNames() != null) {
             System.out.println("Tags submitted: " + String.join(", ", questionRequestDTO.tagNames()));
         } else {
             System.out.println("No tags submitted");
         }
+
         Map<String, Object> claims = jwt.getClaim("claims");
         String email = (String) claims.get("email");
+
         try {
             QuestionResponseDTO response = questionService.createQuestion(questionRequestDTO, email);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -46,8 +54,6 @@ public class QuestionController {
                     .body(Map.of("message", "User not found"));
         }
     }
-
-
 
 
     @GetMapping("/{id}")
