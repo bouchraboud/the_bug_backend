@@ -5,11 +5,9 @@ import org.springframework.transaction.annotation.Transactional;
 import theBugApp.backend.dto.*;
 import theBugApp.backend.entity.Question;
 import theBugApp.backend.entity.Tag;
+import theBugApp.backend.entity.Vote;
 import theBugApp.backend.mappers.UserMapper;
-import theBugApp.backend.repository.AnswerRepository;
-import theBugApp.backend.repository.FollowTagRepository;
-import theBugApp.backend.repository.QuestionRepository;
-import theBugApp.backend.repository.TagRepository;
+import theBugApp.backend.repository.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,14 +21,16 @@ public class TagService {
     private final AnswerService answerService;
     private final FollowTagRepository followTagRepository;
     private final UserMapper userMapper;
+    private final VoteRepository voteRepository;
 
-    public TagService(TagRepository tagRepository, QuestionRepository questionRepository, AnswerRepository answerRepository, AnswerService answerService, FollowTagRepository followTagRepository, UserMapper userMapper) {
+    public TagService(TagRepository tagRepository, QuestionRepository questionRepository, AnswerRepository answerRepository, AnswerService answerService, FollowTagRepository followTagRepository, UserMapper userMapper, VoteRepository voteRepository) {
         this.tagRepository = tagRepository;
         this.questionRepository = questionRepository;
         this.answerRepository=answerRepository;
         this.answerService=answerService;
         this.followTagRepository = followTagRepository;
         this.userMapper = userMapper;
+        this.voteRepository = voteRepository;
     }
 
     @Transactional
@@ -147,6 +147,13 @@ public class TagService {
     }
 
     QuestionResponseDTO convertQuestionToDTO(Question question) {
+        int voteScore = 0;
+        List<Vote> votes = voteRepository.findByQuestion(question);
+        if (votes != null) {
+            voteScore = votes.stream()
+                    .mapToInt(v -> v.getVoteType() == Vote.VoteType.UPVOTE ? 1 : -1)
+                    .sum();
+        }
         Set<String> tagNames = getTagsByQuestionId(question.getId());
         Set<SimpleTagDTO> tagDTOs = tagNames.stream()
                 .map(SimpleTagDTO::new)
@@ -154,17 +161,20 @@ public class TagService {
         List<AnswerResponseDTO> answerDTOs = answerRepository.findByQuestionId(question.getId()).stream()
                 .map(answerService::convertToDTO)
                 .collect(Collectors.toList());
-
+        UserDto userDto = null;
+        if (question.getUser() != null) {
+            userDto = userMapper.toUserDto(question.getUser());  // Call your mapping method here
+        }
         return new QuestionResponseDTO(
                 question.getId(),
                 question.getTitle(),
                 question.getContent(),
+                question.getPlainTextContent(),
                 question.getCreatedAt(),
                 question.getUpdatedAt(),
-                question.getUser().getInfoUser().getUsername(),
-                question.getUser().getInfoUser().getEmail(),
+                userDto,
                 0, // viewCount
-                0, // voteScore
+                voteScore,
                 question.getAnswers().size(),
                 tagDTOs,
                 answerDTOs
