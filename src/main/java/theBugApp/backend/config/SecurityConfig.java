@@ -64,6 +64,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/answers/*/accept").authenticated()
                         // Public GET endpoints (view answers)
                         .requestMatchers(HttpMethod.GET, "/api/answers/question/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/answers/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/answers/user/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/answers/*/voters").permitAll()
 

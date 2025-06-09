@@ -9,7 +9,6 @@ public record AnswerResponseDTO(
         Date updatedAt,
         boolean isAccepted,
         int voteScore,
-        String authorUsername,
-        String authorEmail,
+        UserDto user,
         Long questionId
 ) {}

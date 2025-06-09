@@ -21,4 +21,7 @@ public interface AnswerService {
     // Add this method if you plan to implement answer updates
     @Transactional
     AnswerResponseDTO updateAnswer(Long answerId, AnswerRequestDTO answerRequest, String userEmail);
+
+    @Transactional(readOnly = true)
+    AnswerResponseDTO getAnswerById(Long answerId);
 }

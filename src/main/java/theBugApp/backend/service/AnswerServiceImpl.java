@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import theBugApp.backend.dto.AnswerRequestDTO;
 import theBugApp.backend.dto.AnswerResponseDTO;
+import theBugApp.backend.dto.UserDto;
 import theBugApp.backend.entity.Answer;
 import theBugApp.backend.entity.Question;
 import theBugApp.backend.entity.User;
@@ -16,6 +17,7 @@ import theBugApp.backend.exception.InsufficientReputationException;
 import theBugApp.backend.exception.QuestionNotFoundException;
 import theBugApp.backend.exception.UnauthorizedActionException;
 import theBugApp.backend.exception.UserNotFoundException;
+import theBugApp.backend.mappers.UserMapper;
 import theBugApp.backend.repository.AnswerRepository;
 import theBugApp.backend.repository.QuestionRepository;
 import theBugApp.backend.repository.UserRepository;
@@ -36,6 +38,8 @@ public class AnswerServiceImpl implements AnswerService {
 
     @Autowired
     private ReputationService reputationService;
+    @Autowired
+    private UserMapper userMapper;
 
     @Override
     @Transactional
@@ -107,7 +111,10 @@ public class AnswerServiceImpl implements AnswerService {
                 .mapToInt(v -> v.getVoteType() == Vote.VoteType.UPVOTE ? 1 : -1)
                 .sum()
                 : 0;
-
+        UserDto userDto = null;
+        if (answer.getUser() != null) {
+            userDto = userMapper.toUserDto(answer.getUser());  // Call your mapping method here
+        }
         return new AnswerResponseDTO(
                 answer.getId(),
                 answer.getContent(),
@@ -115,8 +122,7 @@ public class AnswerServiceImpl implements AnswerService {
                 answer.getUpdatedAt(),
                 answer.isAccepted(),
                 voteScore,
-                answer.getUser().getInfoUser().getUsername(),
-                answer.getUser().getInfoUser().getEmail(),
+                userDto,
                 answer.getQuestion().getId()
         );
     }
@@ -269,4 +275,12 @@ public class AnswerServiceImpl implements AnswerService {
 
         answerRepository.delete(answer);
     }
+    @Transactional(readOnly = true)
+    @Override
+    public AnswerResponseDTO getAnswerById(Long answerId) {
+        Answer answer = answerRepository.findById(answerId)
+                .orElseThrow(() -> new AnswerNotFoundException(answerId));
+        return convertToDTO(answer);
+    }
+
 }

@@ -102,6 +102,12 @@ public class AnswerController {
         List<VoteInfoDto> voteInfo = voteService.getVoteInfoByAnswer(answerId);
         return ResponseEntity.ok(voteInfo);
     }
+    @GetMapping("/{answerId}")
+    public ResponseEntity<AnswerResponseDTO> getAnswer(@PathVariable Long answerId) {
+        AnswerResponseDTO response = answerService.getAnswerById(answerId);
+        return ResponseEntity.ok(response);
+    }
+
 
 
 }

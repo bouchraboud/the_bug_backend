@@ -4,8 +4,8 @@ public enum NotificationType {
     TAG,
     QUESTION,
     ANSWER,
-    ANSWER_ACCEPTED,  // Answer was accepted
-    ANSWER_UPDATE,    // Followed answer was updated
-    QUESTION_UPDATE,  // Followed question was updated
+    ANSWER_ACCEPTED,
+    ANSWER_UPDATE,
+    QUESTION_UPDATE,
     FOLLOW
 }
