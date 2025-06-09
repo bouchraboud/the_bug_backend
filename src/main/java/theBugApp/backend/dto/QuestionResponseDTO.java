@@ -9,10 +9,10 @@ public record QuestionResponseDTO(
         Long id,
         String title,
         String content,
+        String plainTextContent,
         Date createdAt,
         Date updatedAt,
-        String authorUsername,
-        String authorEmail,
+        UserDto user,
         int viewCount,
         int voteScore,
         int answerCount,  // Add this field

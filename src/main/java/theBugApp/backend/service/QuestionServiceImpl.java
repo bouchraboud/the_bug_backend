@@ -6,16 +6,14 @@ import org.springframework.data.domain.PageRequest;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import theBugApp.backend.dto.AnswerResponseDTO;
-import theBugApp.backend.dto.QuestionResponseDTO;
-import theBugApp.backend.dto.QuestionRequestDTO;
-import theBugApp.backend.dto.SimpleTagDTO;
+import theBugApp.backend.dto.*;
 import theBugApp.backend.entity.Question;
 import theBugApp.backend.entity.Tag;
 import theBugApp.backend.entity.User;
 import theBugApp.backend.entity.Vote;
 import theBugApp.backend.exception.QuestionNotFoundException;
 import theBugApp.backend.exception.UnauthorizedActionException;
+import theBugApp.backend.mappers.UserMapper;
 import theBugApp.backend.repository.AnswerRepository;
 import theBugApp.backend.repository.QuestionRepository;
 import theBugApp.backend.repository.UserRepository;
@@ -39,6 +37,8 @@ public class QuestionServiceImpl implements QuestionService {
     private final NotificationService notificationService; // Add this dependency
     private final AnswerRepository answerRepository;
     private final AnswerService answerService;
+    private final LexicalContentProcessor lexicalProcessor;
+    private final UserMapper userMapper;
 
     @Override
     @Transactional
@@ -49,8 +49,8 @@ public class QuestionServiceImpl implements QuestionService {
         Question question = new Question();
         question.setTitle(request.title());
         question.setContent(request.content());
-
-
+        String plainText = lexicalProcessor.extractPlainText(request.content());
+        question.setPlainTextContent(plainText);
         question.setUser(user);
 
         if (request.tagNames() != null && !request.tagNames().isEmpty()) {
@@ -116,17 +116,20 @@ public class QuestionServiceImpl implements QuestionService {
         List<AnswerResponseDTO> answerDTOs = answerRepository.findByQuestionId(question.getId()).stream()
                 .map(answerService::convertToDTO)
                 .collect(Collectors.toList());
-
+        UserDto userDto = null;
+        if (question.getUser() != null) {
+            userDto = userMapper.toUserDto(question.getUser());  // Call your mapping method here
+        }
         return new QuestionResponseDTO(
                 question.getId(),
                 question.getTitle(),
                 question.getContent(),
+                question.getPlainTextContent(),
                 question.getCreatedAt(),
                 question.getUpdatedAt(),
-                question.getUser().getInfoUser().getUsername(),
-                question.getUser().getInfoUser().getEmail(),
+                userDto,
                 0, // viewCount
-                voteScore, // Now includes actual vote score
+                voteScore,
                 question.getAnswers().size(),
                 tagDTOs,
                 answerDTOs

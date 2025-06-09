@@ -26,6 +26,9 @@ public class Question {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    @Column(columnDefinition = "TEXT")
+    private String plainTextContent;
+
     @CreationTimestamp
     private Date createdAt;
 
