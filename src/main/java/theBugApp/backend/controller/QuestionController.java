@@ -5,9 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
-import theBugApp.backend.dto.AnswerResponseDTO;
-import theBugApp.backend.dto.QuestionRequestDTO;
-import theBugApp.backend.dto.QuestionResponseDTO;
+import theBugApp.backend.dto.*;
 import theBugApp.backend.exception.QuestionNotFoundException;
 import theBugApp.backend.exception.UserNotFoundException;
 import theBugApp.backend.service.AnswerService;
@@ -15,6 +13,8 @@ import theBugApp.backend.service.LexicalContentProcessor;
 import theBugApp.backend.service.QuestionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.jwt.Jwt;
+import theBugApp.backend.service.VoteServiceImpl;
+
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +26,8 @@ public class QuestionController {
 
     private final QuestionService questionService;
     private final AnswerService answerService;
+    private final VoteServiceImpl voteService;
+
 
     @PostMapping
     public ResponseEntity<?> createQuestion(
@@ -110,4 +112,10 @@ public class QuestionController {
         return ResponseEntity.ok(updatedQuestion);
     }
 
+
+    @GetMapping("/{questionId}/voters")
+    public ResponseEntity<List<VoteInfoDto>> getVoteInfoByQuestion(@PathVariable Long questionId) {
+        List<VoteInfoDto> voteInfo = voteService.getVoteInfoByQuestion(questionId);
+        return ResponseEntity.ok(voteInfo);
+    }
 }

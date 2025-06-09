@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
         import theBugApp.backend.dto.AnswerRequestDTO;
 import theBugApp.backend.dto.AnswerResponseDTO;
+import theBugApp.backend.dto.VoteInfoDto;
 import theBugApp.backend.exception.AnswerNotFoundException;
 import theBugApp.backend.exception.QuestionNotFoundException;
 import theBugApp.backend.exception.UnauthorizedActionException;
@@ -14,6 +15,8 @@ import theBugApp.backend.exception.UserNotFoundException;
 import theBugApp.backend.service.AnswerService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import theBugApp.backend.service.VoteServiceImpl;
+
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +26,7 @@ import java.util.Map;
 public class AnswerController {
 
     private final AnswerService answerService;
+    private final VoteServiceImpl voteService;
 
     @PostMapping
     public ResponseEntity<?> createAnswer(
@@ -92,6 +96,11 @@ public class AnswerController {
 
         AnswerResponseDTO updatedAnswer = answerService.updateAnswer(answerId, answerRequest, email);
         return ResponseEntity.ok(updatedAnswer);
+    }
+    @GetMapping("/{answerId}/voters")
+    public ResponseEntity<List<VoteInfoDto>> getVoteInfoByAnswer(@PathVariable Long answerId) {
+        List<VoteInfoDto> voteInfo = voteService.getVoteInfoByAnswer(answerId);
+        return ResponseEntity.ok(voteInfo);
     }
 
 

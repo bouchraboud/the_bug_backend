@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import theBugApp.backend.dto.VoteInfoDto;
 import theBugApp.backend.entity.*;
 import theBugApp.backend.enums.ReputationAction;
 import theBugApp.backend.exception.InsufficientReputationException;
@@ -12,7 +13,10 @@ import theBugApp.backend.repository.AnswerRepository;
 import theBugApp.backend.repository.QuestionRepository;
 import theBugApp.backend.repository.UserRepository;
 import theBugApp.backend.repository.VoteRepository;
+
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -201,5 +205,18 @@ public class VoteServiceImpl implements VoteService {
                     vote.getAnswer().getQuestion().getId(), vote.getAnswer().getId());
             reputationService.awardCustomReputation(voterId, 1, "Downvote penalty removed", null, null);
         }
+    }
+
+    public List<VoteInfoDto> getVoteInfoByQuestion(Long questionId) {
+        List<Vote> votes = voteRepository.findVotesByQuestionId(questionId);
+        return votes.stream()
+                .map(vote -> new VoteInfoDto(vote.getUser().getUserId(), vote.getVoteType()))
+                .collect(Collectors.toList());
+    }
+    public List<VoteInfoDto> getVoteInfoByAnswer(Long answerId) {
+        List<Vote> votes = voteRepository.findVotesByAnswerId(answerId);
+        return votes.stream()
+                .map(vote -> new VoteInfoDto(vote.getUser().getUserId(), vote.getVoteType()))
+                .collect(Collectors.toList());
     }
 }

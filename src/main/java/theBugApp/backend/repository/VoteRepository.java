@@ -3,6 +3,7 @@ package theBugApp.backend.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import theBugApp.backend.dto.VoteInfoDto;
 import theBugApp.backend.entity.Vote;
 import theBugApp.backend.entity.User;
 import theBugApp.backend.entity.Question;
@@ -39,5 +40,15 @@ public interface VoteRepository extends JpaRepository<Vote, Long> {
     // Count downvotes by user
     @Query("SELECT COUNT(v) FROM Vote v WHERE v.user.userId = :userId AND v.voteType = 'DOWNVOTE'")
     long countDownvotesByUserId(@Param("userId") Long userId);
+
+
+    @Query("SELECT v FROM Vote v WHERE v.question.id = :questionId")
+    List<Vote> findVotesByQuestionId(@Param("questionId") Long questionId);
+
+    @Query("SELECT v FROM Vote v WHERE v.answer.id = :answerId")
+    List<Vote> findVotesByAnswerId(@Param("answerId") Long answerId);
+
+
+
 
 }

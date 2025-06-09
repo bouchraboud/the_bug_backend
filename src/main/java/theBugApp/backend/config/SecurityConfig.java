@@ -65,6 +65,7 @@ public class SecurityConfig {
                         // Public GET endpoints (view answers)
                         .requestMatchers(HttpMethod.GET, "/api/answers/question/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/answers/user/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/answers/*/voters").permitAll()
 
                         // Secure all other endpoints
                         .anyRequest().authenticated()
@@ -87,6 +88,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/questions").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/questions").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/questions/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/questions/*/voters").permitAll()
                         .anyRequest().authenticated()
                 )
                 .csrf(csrf -> csrf.disable())
