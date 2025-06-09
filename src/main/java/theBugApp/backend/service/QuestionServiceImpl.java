@@ -113,9 +113,6 @@ public class QuestionServiceImpl implements QuestionService {
             // Fall back to empty set if there's any problem
             System.out.println("Error processing tags for question ID " + question.getId() + ": " + e.getMessage());
         }
-        List<AnswerResponseDTO> answerDTOs = answerRepository.findByQuestionId(question.getId()).stream()
-                .map(answerService::convertToDTO)
-                .collect(Collectors.toList());
         UserDto userDto = null;
         if (question.getUser() != null) {
             userDto = userMapper.toUserDto(question.getUser());  // Call your mapping method here
@@ -131,8 +128,7 @@ public class QuestionServiceImpl implements QuestionService {
                 0, // viewCount
                 voteScore,
                 question.getAnswers().size(),
-                tagDTOs,
-                answerDTOs
+                tagDTOs
         );
     }
     @Transactional(readOnly = true)

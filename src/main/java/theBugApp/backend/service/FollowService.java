@@ -246,11 +246,8 @@ public class FollowService {
                 .map(userMapper::toUserDto)   // Use UserMapper here
                 .collect(Collectors.toList());
         int followersCount = followersDtos.size();
-        List<QuestionResponseDTO> questionDTOs = tag.getQuestions().stream()
-                .map(tagService::convertQuestionToDTO)
-                .collect(Collectors.toList());
         int usageCount =   tag.getQuestions().size(); // or compute it
-        return new FullTagDTO(tag.getId(), tag.getName(), usageCount,followersCount,followersDtos,questionDTOs);
+        return new FullTagDTO(tag.getId(), tag.getName(), usageCount,followersCount);
     }
 
 

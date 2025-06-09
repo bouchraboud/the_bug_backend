@@ -7,8 +7,5 @@ public record FullTagDTO(
         Long id,
         String name,
         int usageCount,
-        int followersCount,
-        List<UserDto> followers,
-        List<QuestionResponseDTO> questions
-
+        int followersCount
 ) {}

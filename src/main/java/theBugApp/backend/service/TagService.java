@@ -71,17 +71,11 @@ public class TagService {
 
                     int followersCount = followersDtos.size();
 
-                    List<QuestionResponseDTO> questionDTOs = tag.getQuestions().stream()
-                            .map(this::convertQuestionToDTO)
-                            .collect(Collectors.toList());
-
                     return new FullTagDTO(
                             tag.getId(),
                             tag.getName(),
                             tag.getQuestions().size(),
-                            followersCount,
-                            followersDtos,
-                            questionDTOs
+                            followersCount
                     );
                 })
                 .sorted((t1, t2) -> Integer.compare(t2.usageCount(), t1.usageCount()))
@@ -101,17 +95,14 @@ public class TagService {
 
                     int followersCount = followersDtos.size();
 
-                    List<QuestionResponseDTO> questionDTOs = tag.getQuestions().stream()
-                            .map(this::convertQuestionToDTO)
-                            .collect(Collectors.toList());
+
 
                     return new FullTagDTO(
                             tag.getId(),
                             tag.getName(),
                             tag.getQuestions().size(),
-                            followersCount,
-                            followersDtos,
-                            questionDTOs
+                            followersCount
+
                     );
                 })
                 .sorted((t1, t2) -> Integer.compare(t2.usageCount(), t1.usageCount()))
@@ -158,9 +149,7 @@ public class TagService {
         Set<SimpleTagDTO> tagDTOs = tagNames.stream()
                 .map(SimpleTagDTO::new)
                 .collect(Collectors.toSet());
-        List<AnswerResponseDTO> answerDTOs = answerRepository.findByQuestionId(question.getId()).stream()
-                .map(answerService::convertToDTO)
-                .collect(Collectors.toList());
+
         UserDto userDto = null;
         if (question.getUser() != null) {
             userDto = userMapper.toUserDto(question.getUser());  // Call your mapping method here
@@ -176,8 +165,7 @@ public class TagService {
                 0, // viewCount
                 voteScore,
                 question.getAnswers().size(),
-                tagDTOs,
-                answerDTOs
+                tagDTOs
         );
     }
 }

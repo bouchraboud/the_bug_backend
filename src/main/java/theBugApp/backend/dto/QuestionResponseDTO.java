@@ -16,6 +16,5 @@ public record QuestionResponseDTO(
         int viewCount,
         int voteScore,
         int answerCount,  // Add this field
-        Set<SimpleTagDTO> tags,// Plus tard: List<TagDTO> tags, List<AnswerDTO> answers, etc.
-        List<AnswerResponseDTO> answers
+        Set<SimpleTagDTO> tags
 ) {}
