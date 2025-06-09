@@ -1,11 +1,14 @@
 package theBugApp.backend.service;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import theBugApp.backend.dto.*;
 import theBugApp.backend.entity.Question;
 import theBugApp.backend.entity.Tag;
 import theBugApp.backend.entity.Vote;
+import theBugApp.backend.exception.TagNotFoundException;
 import theBugApp.backend.mappers.UserMapper;
 import theBugApp.backend.repository.*;
 
@@ -168,4 +171,24 @@ public class TagService {
                 tagDTOs
         );
     }
+
+    public FullTagDTO getTagByName(String tagName) {
+        return tagRepository.findByName(tagName.toLowerCase().trim())
+                .map(tag -> {
+                    List<UserDto> followersDtos = followTagRepository.findFollowersByTagId(tag.getId()).stream()
+                            .map(userMapper::toUserDto)
+                            .toList();
+
+                    int followersCount = followersDtos.size();
+
+                    return new FullTagDTO(
+                            tag.getId(),
+                            tag.getName(),
+                            tag.getQuestions().size(),
+                            followersCount
+                    );
+                })
+                .orElseThrow(() -> new TagNotFoundException("Tag not found with name: " + tagName));
+    }
+
 }

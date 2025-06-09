@@ -29,4 +29,9 @@ public class TagController {
     public ResponseEntity<?> getQuestionsByTag(@PathVariable String tagName) {
         return ResponseEntity.ok(tagService.getQuestionsByTagName(tagName));
     }
+    @GetMapping("/{tagName}")
+    public ResponseEntity<FullTagDTO> getTagByName(@PathVariable String tagName) {
+        return ResponseEntity.ok(tagService.getTagByName(tagName));
+    }
+
 }
