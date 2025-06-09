@@ -142,19 +142,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/users/*/questions").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*/answers").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/users/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/users").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/users/exchange-token").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*/is-following/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*/followers").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*/following").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*/follow-stats").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/public/**").permitAll()
-                        // Endpoints qui nécessitent une authentification
                         .requestMatchers(HttpMethod.POST, "api/users/follow/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "api/users/unfollow/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "api/users/profile/**").authenticated()
-
-
-                        // Par défaut, tout nécessite une authentification
                         .anyRequest().authenticated()
                 )
                 .csrf(csrf -> csrf.disable())
