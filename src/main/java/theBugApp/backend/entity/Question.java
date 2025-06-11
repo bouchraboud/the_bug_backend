@@ -3,6 +3,7 @@ package theBugApp.backend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.util.*;
@@ -39,6 +40,9 @@ public class Question {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Formula("(SELECT COALESCE(SUM(CASE WHEN v.vote_type = 'UPVOTE' THEN 1 WHEN v.vote_type = 'DOWNVOTE' THEN -1 ELSE 0 END), 0) FROM vote v WHERE v.question_id = id)")
+    private Integer voteScore;
+
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "question_tags",
@@ -46,6 +50,7 @@ public class Question {
             inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
     private Set<Tag> tags = new HashSet<>();
+
 
     @Override
     public boolean equals(Object o) {

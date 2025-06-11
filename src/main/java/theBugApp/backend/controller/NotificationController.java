@@ -88,4 +88,21 @@ public class NotificationController {
         int count = notificationService.getUnreadNotificationsForUser(user.getUserId()).size();
         return ResponseEntity.ok(count);
     }
+
+    @DeleteMapping("/{notificationId}")
+    public ResponseEntity<String> deleteNotification(@PathVariable Long notificationId, @AuthenticationPrincipal Jwt jwt) {
+        Map<String, Object> claims = jwt.getClaim("claims");
+        String email = (String) claims.get("email");
+
+        User user = userRepository.findByInfoUser_Email(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        try {
+            notificationService.deleteNotification(notificationId, user.getUserId());
+            return ResponseEntity.ok("Notification deleted successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).body("Not authorized to delete this notification");
+        }
+    }
+
 }

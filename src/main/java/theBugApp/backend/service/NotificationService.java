@@ -231,4 +231,15 @@ public class NotificationService {
             logger.error("Failed to mark all notifications as read for user: {}", userId, e);
         }
     }
+
+    public void deleteNotification(Long notificationId, Long userId) {
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new IllegalArgumentException("Notification not found: " + notificationId));
+
+        if (!notification.getUser().getUserId().equals(userId)) {
+            throw new RuntimeException("User not authorized to delete this notification");
+        }
+        notificationRepository.delete(notification);
+    }
+
 }

@@ -1,14 +1,16 @@
 package theBugApp.backend.repository;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 import theBugApp.backend.entity.Question;
 
 import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Optional;
-
+@Repository
 public interface QuestionRepository extends JpaRepository<Question, Long> {
 
     @Query("SELECT q FROM Question q LEFT JOIN FETCH q.tags WHERE q.id = :id")
@@ -38,4 +40,9 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
 
     // Filter by tag only with pagination
     List<Question> findByTags_Name(String tag, Pageable pageable);
+
+    Page<Question> findAllByOrderByVoteScoreDesc(Pageable pageable);
+    Page<Question> findAllByOrderByCreatedAtDesc(Pageable pageable);
+    Page<Question> findAllByOrderByUpdatedAtDesc(Pageable pageable);
+    Page<Question> findAllByOrderByTitleAsc(Pageable pageable);
 }

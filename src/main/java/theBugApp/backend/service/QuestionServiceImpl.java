@@ -2,8 +2,10 @@ package theBugApp.backend.service;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import theBugApp.backend.dto.*;
@@ -14,7 +16,6 @@ import theBugApp.backend.entity.Vote;
 import theBugApp.backend.exception.QuestionNotFoundException;
 import theBugApp.backend.exception.UnauthorizedActionException;
 import theBugApp.backend.mappers.UserMapper;
-import theBugApp.backend.repository.AnswerRepository;
 import theBugApp.backend.repository.QuestionRepository;
 import theBugApp.backend.repository.UserRepository;
 import theBugApp.backend.repository.VoteRepository;
@@ -27,16 +28,14 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional  // Add @Transactional to ensure the entire operation completes
+@Transactional
 public class QuestionServiceImpl implements QuestionService {
 
     private final QuestionRepository questionRepository;
     private final UserRepository userRepository;
     private final TagService tagService;
     private final VoteRepository voteRepository;
-    private final NotificationService notificationService; // Add this dependency
-    private final AnswerRepository answerRepository;
-    private final AnswerService answerService;
+    private final NotificationService notificationService;
     private final LexicalContentProcessor lexicalProcessor;
     private final UserMapper userMapper;
 
@@ -52,7 +51,7 @@ public class QuestionServiceImpl implements QuestionService {
         String plainText = lexicalProcessor.extractPlainText(request.content());
         question.setPlainTextContent(plainText);
         question.setUser(user);
-
+        question.setVoteScore(0);
         if (request.tagNames() != null && !request.tagNames().isEmpty()) {
             Set<Tag> tags = tagService.getOrCreateTags(request.tagNames());
             question.setTags(new HashSet<>(tags));
@@ -74,12 +73,21 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public List<QuestionResponseDTO> getAllQuestions() {
         List<Question> questions = questionRepository.findAll();
-
-        // Convert to DTOs immediately without trying to force initialization
-        // We'll handle the lazy loading inside convertToResponseDTO
         return questions.stream()
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<QuestionResponseDTO> getAllQuestions(Pageable pageable, String sortBy) {
+        return null;
+    }
+
+    @Override
+    public Page<QuestionResponseDTO> getAllQuestions(Pageable pageable) {
+        Page<Question> questions;
+        questions = questionRepository.findAll(pageable);
+        return questions.map(this::convertToResponseDTO);
     }
 
     @Override
@@ -126,7 +134,7 @@ public class QuestionServiceImpl implements QuestionService {
                 question.getUpdatedAt(),
                 userDto,
                 0, // viewCount
-                voteScore,
+                question.getVoteScore(),
                 question.getAnswers().size(),
                 tagDTOs
         );

@@ -1,5 +1,9 @@
 package theBugApp.backend.controller;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -70,10 +74,12 @@ public class QuestionController {
     }
 
     @GetMapping
-    public ResponseEntity<List<QuestionResponseDTO>> getAllQuestions() {
-        List<QuestionResponseDTO> responses = questionService.getAllQuestions();
-        return ResponseEntity.ok(responses);
+    public ResponseEntity<Page<QuestionResponseDTO>> getAllQuestions(
+            @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        return ResponseEntity.ok(questionService.getAllQuestions(pageable));
     }
+
 
     @GetMapping("/{questionId}/answers")
     public ResponseEntity<?> getAnswersForQuestion(@PathVariable Long questionId) {
