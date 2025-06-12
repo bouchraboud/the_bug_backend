@@ -74,10 +74,13 @@ public class QuestionController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<QuestionResponseDTO>> getAllQuestions(
+    public ResponseEntity<List<QuestionResponseDTO>> getAllQuestions(
             @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        return ResponseEntity.ok(questionService.getAllQuestions(pageable));
+        Page<QuestionResponseDTO> questionPage = questionService.getAllQuestions(pageable);
+        List<QuestionResponseDTO> questionList = questionPage.getContent(); // Récupérer la liste des questions
+
+        return ResponseEntity.ok(questionList);
     }
 
 
@@ -98,10 +101,10 @@ public class QuestionController {
             @RequestParam(required = false) String tag,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-
         List<QuestionResponseDTO> responses = questionService.searchQuestions(query, tag, page, size);
         return ResponseEntity.ok(responses);
     }
+
     @PutMapping("/{questionId}")
     public ResponseEntity<QuestionResponseDTO> updateQuestion(
             @PathVariable Long questionId,
